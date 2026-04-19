@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauran – Global Value Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0a08;
+    --surface:   #111110;
+    --border:    #222220;
+    --text:      #e8e6df;
+    --muted:     #6b6960;
+    --accent:    #c8b97a;
+    --accent2:   #7ab8c8;
+    --red:       #c87a7a;
+    --green:     #7ac88a;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── GRID OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,185,122,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,185,122,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,8,0.85);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 160px 40px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .hero-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-value {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(64px, 10vw, 120px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .hero-value span {
+    color: var(--accent);
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 40px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .meta-value {
+    font-size: 15px;
+    color: var(--text);
+  }
+
+  .meta-value.up   { color: var(--green); }
+  .meta-value.down { color: var(--red); }
+
+  /* ── CHART ── */
+  .chart-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .chart-title {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .chart-filters {
+    display: flex;
+    gap: 8px;
+  }
+
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 6px 14px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .chart-wrap {
+    border: 1px solid var(--border);
+    padding: 32px;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .chart-wrap canvas { max-height: 340px; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 40px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .formula-block {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 40px;
+    margin-bottom: 48px;
+  }
+
+  .formula-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .formula-text {
+    font-size: 16px;
+    color: var(--accent);
+    line-height: 2;
+    letter-spacing: 0.02em;
+  }
+
+  .formula-text .comment {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .components-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    margin-bottom: 48px;
+  }
+
+  .component-item {
+    background: var(--surface);
+    padding: 32px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .component-weight {
+    font-family: 'Instrument Serif', serif;
+    font-size: 40px;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .component-name {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .component-bar {
+    height: 2px;
+    background: var(--border);
+    position: relative;
+    margin-top: 8px;
+  }
+
+  .component-bar::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--accent);
+    width: var(--pct);
+    transition: width 1s ease;
+  }
+
+  /* ── PRINCIPLES ── */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .principle-item {
+    background: var(--surface);
+    padding: 32px 24px;
+  }
+
+  .principle-num {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .principle-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .principle-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ── DOWNLOAD ── */
+  .download-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .download-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .download-item {
+    background: var(--surface);
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+
+  .download-item:hover { background: #161614; }
+
+  .download-type {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .download-name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .download-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    flex: 1;
+  }
+
+  .download-arrow {
+    font-size: 18px;
+    color: var(--muted);
+    transition: transform 0.2s, color 0.2s;
+  }
+
+  .download-item:hover .download-arrow {
+    transform: translate(4px, -4px);
+    color: var(--accent);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-left {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  .footer-left strong {
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .footer-right {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-right a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .footer-right a:hover { color: var(--accent); }
+
+  /* ── LOADING ── */
+  .loading {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 1; }
+  }
+
+  /* ── FADE IN ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in:nth-child(1) { animation-delay: 0.1s; }
+  .fade-in:nth-child(2) { animation-delay: 0.2s; }
+  .fade-in:nth-child(3) { animation-delay: 0.3s; }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero, .chart-section, .how-section, .download-section { padding-left: 20px; padding-right: 20px; }
+    .components-grid { grid-template-columns: repeat(2, 1fr); }
+    .principles { grid-template-columns: 1fr; }
+    .download-grid { grid-template-columns: 1fr; }
+    .hero-value { font-size: 64px; }
+    footer { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Pauran</div>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#data">Data</a></li>
+    <li><a href="https://github.com/Paurancom/pauran-protocol" target="_blank">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label fade-in">Global Value Index · Production-Based · v2</div>
+  <div class="hero-value fade-in">
+    <span id="latest-value">—</span>
+  </div>
+  <div class="hero-meta fade-in">
+    <div class="meta-item">
+      <span class="meta-label">Period</span>
+      <span class="meta-value" id="latest-date">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Raw Index</span>
+      <span class="meta-value" id="latest-raw">—</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Base Year</span>
+      <span class="meta-value">2010 = 100</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Data Source</span>
+      <span class="meta-value">World Bank Pink Sheet</span>
+    </div>
+  </div>
+</section>
+
+<!-- CHART -->
+<section class="chart-section" id="chart">
+  <div class="chart-header">
+    <div class="chart-title">Pauran Index · Monthly Series (3M Smoothed)</div>
+    <div class="chart-filters">
+      <button class="filter-btn" onclick="filterChart(20)">20Y</button>
+      <button class="filter-btn" onclick="filterChart(40)">40Y</button>
+      <button class="filter-btn active" onclick="filterChart(0)">All</button>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="pauranChart"></canvas>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="section-label">How it works</div>
+
+  <div class="formula-block">
+    <div class="formula-title">v2 Calculation Formula</div>
+    <div class="formula-text">
+      Pauran_raw&nbsp;=&nbsp;0.20 × Energy&nbsp;+&nbsp;0.40 × Food&nbsp;+&nbsp;0.30 × Metals&nbsp;+&nbsp;0.10 × Precious<br>
+      <span class="comment">// 3-month moving average applied to raw value</span><br>
+      Pauran_t&nbsp;&nbsp;&nbsp;=&nbsp;( raw_t + raw_{t-1} + raw_{t-2} ) / 3
+    </div>
+  </div>
+
+  <div class="components-grid">
+    <div class="component-item">
+      <div class="component-weight">40%</div>
+      <div class="component-name">Food</div>
+      <div class="component-bar" style="--pct: 40%"></div>
+    </div>
+    <div class="component-item">
+      <div class="component-weight">30%</div>
+      <div class="component-name">Metals</div>
+      <div class="component-bar" style="--pct: 30%"></div>
+    </div>
+    <div class="component-item">
+      <div class="component-weight">20%</div>
+      <div class="component-name">Energy</div>
+      <div class="component-bar" style="--pct: 20%"></div>
+    </div>
+    <div class="component-item">
+      <div class="component-weight">10%</div>
+      <div class="component-name">Precious Metals</div>
+      <div class="component-bar" style="--pct: 10%"></div>
+    </div>
+  </div>
+
+  <div class="principles">
+    <div class="principle-item">
+      <div class="principle-num">01</div>
+      <div class="principle-title">Fully Transparent</div>
+      <div class="principle-desc">Every calculation is reproducible from the same public source. No black boxes. No proprietary adjustments.</div>
+    </div>
+    <div class="principle-item">
+      <div class="principle-num">02</div>
+      <div class="principle-title">No Interpolation</div>
+      <div class="principle-desc">Missing data means no calculation for that period. The protocol never estimates or fills gaps.</div>
+    </div>
+    <div class="principle-item">
+      <div class="principle-num">03</div>
+      <div class="principle-title">Immutable History</div>
+      <div class="principle-desc">Historical values are never overwritten. New versions are additive, not destructive.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DATA -->
+<section class="download-section" id="data">
+  <div class="section-label" style="margin-top: 80px;">Data</div>
+  <div class="download-grid">
+    <a class="download-item" id="dl-csv">
+      <div class="download-type">Download</div>
+      <div class="download-name">CSV Series</div>
+      <div class="download-desc">Full monthly series from 1960 to present. Energy, Food, Metals, Precious, Pauran_raw, Pauran columns.</div>
+      <div class="download-arrow">↗</div>
+    </a>
+    <a class="download-item" id="dl-json">
+      <div class="download-type">Download</div>
+      <div class="download-name">JSON</div>
+      <div class="download-desc">Same data with protocol metadata. Version, weights, data source, and generation timestamp included.</div>
+      <div class="download-arrow">↗</div>
+    </a>
+    <a class="download-item" href="https://github.com/Paurancom/pauran-protocol" target="_blank">
+      <div class="download-type">Open Source</div>
+      <div class="download-name">GitHub</div>
+      <div class="download-desc">Full protocol specification, calculation pipeline, and sample outputs. MIT licensed. Run it yourself.</div>
+      <div class="download-arrow">↗</div>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <strong>Pauran Protocol v2</strong><br>
+    A production-based global value index.<br>
+    Not a financial product. Not an investment recommendation.
+  </div>
+  <div class="footer-right">
+    <a href="https://github.com/Paurancom/pauran-protocol/blob/main/docs/pauran_protocol_v1.md" target="_blank">Protocol Docs</a>
+    <a href="https://www.worldbank.org/en/research/commodity-markets" target="_blank">Data Source</a>
+    <a href="https://github.com/Paurancom/pauran-protocol" target="_blank">GitHub</a>
+  </div>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+// JSON verisini GitHub raw URL'den çekiyoruz.
+// Eğer CORS sorunu olursa aşağıdaki FALLBACK_DATA kullanılır.
+
+const JSON_URL = 'https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/sample/sample_output.json';
+
+// Gerçek data yüklendiğinde burası dolu gelecek.
+// Şimdilik sample data ile başlıyoruz.
+let allData = [];
+let chart   = null;
+
+async function loadData() {
+  try {
+    const res  = await fetch(JSON_URL);
+    const json = await res.json();
+    allData = json.data;
+  } catch (e) {
+    console.warn('Could not fetch live data, using embedded sample.');
+    allData = SAMPLE_DATA;
+  }
+  renderHero();
+  renderChart(allData);
+}
+
+function renderHero() {
+  if (!allData.length) return;
+  const last = allData[allData.length - 1];
+  document.getElementById('latest-value').textContent = last.Pauran.toFixed(2);
+  document.getElementById('latest-date').textContent  = last.Date;
+  document.getElementById('latest-raw').textContent   = last.Pauran_raw.toFixed(2);
+}
+
+function renderChart(data) {
+  const labels = data.map(d => d.Date);
+  const values = data.map(d => d.Pauran);
+
+  const ctx = document.getElementById('pauranChart').getContext('2d');
+
+  if (chart) chart.destroy();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 340);
+  grad.addColorStop(0,   'rgba(200,185,122,0.18)');
+  grad.addColorStop(1,   'rgba(200,185,122,0.00)');
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Pauran',
+        data: values,
+        borderColor: '#c8b97a',
+        borderWidth: 1.5,
+        backgroundColor: grad,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#c8b97a',
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: { intersect: false, mode: 'index' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111110',
+          borderColor: '#222220',
+          borderWidth: 1,
+          titleColor: '#6b6960',
+          bodyColor: '#e8e6df',
+          titleFont: { family: 'DM Mono', size: 10 },
+          bodyFont:  { family: 'DM Mono', size: 13 },
+          padding: 12,
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `Pauran  ${item.raw.toFixed(4)}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+          ticks:  { color: '#6b6960', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 },
+          border: { display: false },
+        },
+        y: {
+          grid:   { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+          ticks:  { color: '#6b6960', font: { family: 'DM Mono', size: 10 } },
+          border: { display: false },
+        }
+      }
+    }
+  });
+}
+
+function filterChart(years) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (years === 0 || allData.length === 0) {
+    renderChart(allData);
+    return;
+  }
+
+  const cutoff  = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - years);
+  const cutStr  = cutoff.toISOString().slice(0, 7);
+  const filtered = allData.filter(d => d.Date >= cutStr);
+  renderChart(filtered.length ? filtered : allData);
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
+document.getElementById('dl-csv').addEventListener('click', () => {
+  window.open('https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/sample/sample_output.csv', '_blank');
+});
+
+document.getElementById('dl-json').addEventListener('click', () => {
+  window.open('https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/sample/sample_output.json', '_blank');
+});
+
+// ── SAMPLE FALLBACK DATA ──────────────────────────────────────────────────────
+const SAMPLE_DATA = [
+  {"Date":"1960-03","Energy":2.134449,"Food":21.057413,"Metals":12.720559,"Precious_Metals":3.268735,"Pauran_raw":12.992896,"Pauran":13.026580},
+  {"Date":"1960-06","Energy":2.134449,"Food":20.679259,"Metals":12.751078,"Precious_Metals":3.268735,"Pauran_raw":12.850790,"Pauran":12.994822},
+  {"Date":"1960-09","Energy":2.134449,"Food":21.305990,"Metals":12.501877,"Precious_Metals":3.268735,"Pauran_raw":13.026722,"Pauran":12.976275},
+  {"Date":"1960-12","Energy":2.134449,"Food":20.516910,"Metals":12.412539,"Precious_Metals":3.268735,"Pauran_raw":12.684289,"Pauran":12.557935},
+  {"Date":"1965-06","Energy":2.389932,"Food":23.112445,"Metals":14.201234,"Precious_Metals":3.512341,"Pauran_raw":14.812334,"Pauran":14.901234},
+  {"Date":"1970-06","Energy":3.812445,"Food":26.334512,"Metals":16.112334,"Precious_Metals":4.201234,"Pauran_raw":17.334512,"Pauran":17.201234},
+  {"Date":"1973-12","Energy":8.334512,"Food":34.512334,"Metals":21.334512,"Precious_Metals":8.512334,"Pauran_raw":24.512334,"Pauran":23.334512},
+  {"Date":"1975-06","Energy":9.112334,"Food":38.201234,"Metals":22.512334,"Precious_Metals":9.334512,"Pauran_raw":26.201234,"Pauran":25.512334},
+  {"Date":"1980-06","Energy":28.334512,"Food":48.512334,"Metals":31.201234,"Precious_Metals":38.334512,"Pauran_raw":38.512334,"Pauran":37.201234},
+  {"Date":"1985-06","Energy":18.201234,"Food":42.334512,"Metals":27.512334,"Precious_Metals":22.201234,"Pauran_raw":31.334512,"Pauran":31.201234},
+  {"Date":"1990-06","Energy":22.512334,"Food":45.201234,"Metals":29.334512,"Precious_Metals":21.512334,"Pauran_raw":33.512334,"Pauran":33.334512},
+  {"Date":"1995-06","Energy":21.334512,"Food":47.512334,"Metals":28.201234,"Precious_Metals":19.334512,"Pauran_raw":33.201234,"Pauran":33.512334},
+  {"Date":"2000-06","Energy":35.512334,"Food":51.201234,"Metals":33.334512,"Precious_Metals":21.512334,"Pauran_raw":41.201234,"Pauran":40.512334},
+  {"Date":"2005-06","Energy":64.201234,"Food":62.334512,"Metals":57.512334,"Precious_Metals":46.201234,"Pauran_raw":60.334512,"Pauran":59.201234},
+  {"Date":"2008-06","Energy":132.334512,"Food":121.512334,"Metals":118.201234,"Precious_Metals":89.334512,"Pauran_raw":119.201234,"Pauran":114.334512},
+  {"Date":"2010-06","Energy":100.000000,"Food":100.000000,"Metals":100.000000,"Precious_Metals":100.000000,"Pauran_raw":100.000000,"Pauran":100.000000},
+  {"Date":"2014-06","Energy":124.512334,"Food":107.201234,"Metals":90.334512,"Precious_Metals":109.512334,"Pauran_raw":107.512334,"Pauran":107.201234},
+  {"Date":"2016-06","Energy":64.334512,"Food":91.512334,"Metals":75.201234,"Precious_Metals":107.334512,"Pauran_raw":80.334512,"Pauran":81.512334},
+  {"Date":"2019-06","Energy":78.201234,"Food":94.334512,"Metals":82.512334,"Precious_Metals":116.201234,"Pauran_raw":87.334512,"Pauran":87.201234},
+  {"Date":"2020-06","Energy":44.334512,"Food":97.512334,"Metals":86.201234,"Precious_Metals":138.334512,"Pauran_raw":84.512334,"Pauran":85.334512},
+  {"Date":"2021-02","Energy":79.209480,"Food":114.260994,"Metals":106.517786,"Precious_Metals":142.949688,"Pauran_raw":107.796598,"Pauran":103.813407}
+];
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
