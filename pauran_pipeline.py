@@ -40,6 +40,15 @@ COLUMN_MAP = {
     "iPRECIOUSMET":"Precious_Metals",
 }
 
+# Positional fallback (new Pink Sheet format, post-2021)
+# Col 0=Date, 2=Energy, 6=Food, 14=Metals, 16=Precious
+COLUMN_POS = {
+    "Energy":          2,
+    "Food":            6,
+    "Metals":          14,
+    "Precious_Metals": 16,
+}
+
 DATE_PATTERN = r"^\d{4}M\d{2}$"  # e.g. 1960M01
 
 
@@ -62,46 +71,50 @@ def load(filepath: str) -> pd.DataFrame:
 def extract(df: pd.DataFrame) -> pd.DataFrame:
     """
     Extract date + 4 component columns.
+    Tries named column mapping first, falls back to positional mapping.
     Protocol rule: no interpolation, no backfill.
     Missing data rows are dropped entirely.
     """
-    # Rename known columns
-    df = df.rename(columns=COLUMN_MAP)
+    # Try named column mapping first
+    df_named = df.rename(columns=COLUMN_MAP)
+    date_col = df_named.columns[0]
+    df_named = df_named.rename(columns={date_col: "Date"})
 
-    # First column = Date
-    date_col = df.columns[0]
-    df = df.rename(columns={date_col: "Date"})
-
-    # Keep only needed columns
     needed = ["Date"] + list(WEIGHTS.keys())
-    missing_cols = [c for c in needed if c not in df.columns]
-    if missing_cols:
-        raise ValueError(f"Protocol columns not found in sheet: {missing_cols}")
+    has_named = all(c in df_named.columns for c in needed)
 
-    df = df[needed].copy()
+    if has_named:
+        df_work = df_named[needed].copy()
+    else:
+        # Positional fallback for newer Pink Sheet format
+        print("  [Info] Named columns not found, using positional mapping.")
+        df_work = pd.DataFrame()
+        df_work["Date"] = df.iloc[:, 0].astype(str)
+        for col_name, pos in COLUMN_POS.items():
+            df_work[col_name] = pd.to_numeric(df.iloc[:, pos], errors="coerce")
 
     # Filter date rows only (1960M01 format)
-    df = df[df["Date"].astype(str).str.match(DATE_PATTERN)].copy()
+    df_work = df_work[df_work["Date"].astype(str).str.match(DATE_PATTERN)].copy()
 
     # Parse date
-    df["Date"] = pd.to_datetime(
-        df["Date"].astype(str).str.replace("M", "-"),
+    df_work["Date"] = pd.to_datetime(
+        df_work["Date"].astype(str).str.replace("M", "-"),
         format="%Y-%m"
     )
 
     # Numeric conversion
     for col in WEIGHTS.keys():
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+        df_work[col] = pd.to_numeric(df_work[col], errors="coerce")
 
     # Protocol rule: missing data = no calculation
-    before = len(df)
-    df = df.dropna(subset=list(WEIGHTS.keys()))
-    dropped = before - len(df)
+    before = len(df_work)
+    df_work = df_work.dropna(subset=list(WEIGHTS.keys()))
+    dropped = before - len(df_work)
     if dropped > 0:
         print(f"  [Protocol] {dropped} row(s) dropped — missing data (no interpolation applied)")
 
-    df = df.sort_values("Date").reset_index(drop=True)
-    return df
+    df_work = df_work.sort_values("Date").reset_index(drop=True)
+    return df_work
 
 
 # ── STEP 3: CALCULATE ─────────────────────────────────────────────────────────
