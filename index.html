@@ -543,6 +543,57 @@
 
   .code-comment { color: var(--muted); }
 
+  .why-block {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.9;
+    margin-bottom: 48px;
+    padding-left: 2px;
+    border-left: 2px solid var(--accent);
+    padding-left: 20px;
+  }
+
+  .cta-block {
+    margin-top: 40px;
+    padding: 40px;
+    border: 1px solid var(--accent);
+    background: rgba(200,185,122,0.03);
+  }
+
+  .cta-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .cta-items {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .cta-item {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .cta-dash { color: var(--accent); }
+
+  .coming-soon {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
   @media (max-width: 768px) {
     nav { padding: 16px 20px; }
     .hero, .chart-section, .how-section, .download-section { padding-left: 20px; padding-right: 20px; }
@@ -621,6 +672,11 @@
 <section class="how-section" id="how">
   <div class="section-label">How it works</div>
 
+  <div class="why-block">
+    Pauran measures real-world production cost dynamics.<br>
+    It exists as a neutral reference independent of fiat systems.
+  </div>
+
   <div class="formula-block">
     <div class="formula-title">v2 Calculation Formula</div>
     <div class="formula-text">
@@ -687,6 +743,16 @@
     <div class="reproduce-code">
       <span class="code-comment"># Download Pink Sheet → run pipeline → verify</span><br>
       python3 pauran_pipeline.py CMOHistoricalDataMonthly.xlsx output
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <div class="cta-label">Use Pauran as a reference</div>
+    <div class="cta-items">
+      <div class="cta-item"><span class="cta-dash">—</span><span>Benchmark assets against a production-based standard</span></div>
+      <div class="cta-item"><span class="cta-dash">—</span><span>Compare long-term value across economic cycles</span></div>
+      <div class="cta-item"><span class="cta-dash">—</span><span>Integrate via API <span class="coming-soon">coming soon</span></span></div>
     </div>
   </div>
 
