@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -483,6 +484,65 @@
   .fade-in:nth-child(2) { animation-delay: 0.2s; }
   .fade-in:nth-child(3) { animation-delay: 0.3s; }
 
+  .hero-tagline {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-top: 20px;
+    margin-bottom: 8px;
+    max-width: 560px;
+  }
+
+  .diff-block {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+
+  .diff-item {
+    font-size: 12px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+
+  .diff-sep {
+    color: var(--border);
+  }
+
+  .reproduce-block {
+    margin-top: 40px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 32px;
+  }
+
+  .reproduce-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .reproduce-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .reproduce-code {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--text);
+    line-height: 2;
+  }
+
+  .code-comment { color: var(--muted); }
+
   @media (max-width: 768px) {
     nav { padding: 16px 20px; }
     .hero, .chart-section, .how-section, .download-section { padding-left: 20px; padding-right: 20px; }
@@ -512,6 +572,10 @@
   <div class="hero-value fade-in">
     <span id="latest-value">—</span>
   </div>
+  <div class="hero-tagline fade-in">
+    A global reference index tracking real-world production costs.<br>
+    Designed to measure value independent of fiat and speculation.
+  </div>
   <div class="hero-meta fade-in">
     <div class="meta-item">
       <span class="meta-label">Period</span>
@@ -528,6 +592,10 @@
     <div class="meta-item">
       <span class="meta-label">Data Source</span>
       <span class="meta-value">World Bank Pink Sheet</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Update Frequency</span>
+      <span class="meta-value">Monthly · World Bank release</span>
     </div>
   </div>
 </section>
@@ -602,6 +670,26 @@
       <div class="principle-desc">Historical values are never overwritten. New versions are additive, not destructive.</div>
     </div>
   </div>
+
+  <!-- DIFFERENTIATION -->
+  <div class="diff-block">
+    <div class="diff-item">Not tied to any single asset.</div>
+    <div class="diff-sep">·</div>
+    <div class="diff-item">Not driven by market sentiment.</div>
+    <div class="diff-sep">·</div>
+    <div class="diff-item">Not controlled by any authority.</div>
+  </div>
+
+  <!-- REPRODUCIBLE -->
+  <div class="reproduce-block">
+    <div class="reproduce-label">Reproducible by design</div>
+    <div class="reproduce-desc">Run the pipeline with the same source file and get identical output. Every result is independently verifiable.</div>
+    <div class="reproduce-code">
+      <span class="code-comment"># Download Pink Sheet → run pipeline → verify</span><br>
+      python3 pauran_pipeline.py CMOHistoricalDataMonthly.xlsx output
+    </div>
+  </div>
+
 </section>
 
 <div class="divider"></div>
@@ -712,6 +800,25 @@ function renderChart(data) {
       interaction: { intersect: false, mode: 'index' },
       plugins: {
         legend: { display: false },
+        annotation: {
+          annotations: {
+            baseline: {
+              type: 'line',
+              yMin: 100, yMax: 100,
+              borderColor: 'rgba(200,185,122,0.25)',
+              borderWidth: 1,
+              borderDash: [4, 4],
+              label: {
+                display: true,
+                content: 'Base = 100 (2010)',
+                color: 'rgba(200,185,122,0.5)',
+                font: { family: 'DM Mono', size: 10 },
+                position: 'start',
+                backgroundColor: 'transparent',
+              }
+            }
+          }
+        },
         tooltip: {
           backgroundColor: '#111110',
           borderColor: '#222220',
