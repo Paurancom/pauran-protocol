@@ -1,0 +1,29 @@
+{
+  "protocol": "Pauran",
+  "version": "v2",
+  "base_year": 2010,
+  "data_source": "World Bank - Commodity Markets Outlook (Pink Sheet), Monthly Indices",
+  "weights": {
+    "Energy": 0.2,
+    "Food": 0.4,
+    "Metals": 0.3,
+    "Precious_Metals": 0.1
+  },
+  "smoothing": "3-month moving average",
+  "generated_at": "2026-04-18T11:28:06Z",
+  "period_start": "1960-03",
+  "period_end": "2021-02",
+  "total_months": 732,
+  "data": [
+    {"Date": "1960-03", "Energy": 2.134449, "Food": 21.057413, "Metals": 12.720559, "Precious_Metals": 3.268735, "Pauran_raw": 12.992896, "Pauran": 13.026580},
+    {"Date": "1960-04", "Energy": 2.134449, "Food": 21.232864, "Metals": 12.929570, "Precious_Metals": 3.268735, "Pauran_raw": 13.125780, "Pauran": 13.035116},
+    {"Date": "1960-05", "Energy": 2.134449, "Food": 21.087342, "Metals": 12.730654, "Precious_Metals": 3.268735, "Pauran_raw": 13.007896, "Pauran": 13.042191},
+    {"Date": "1960-06", "Energy": 2.134449, "Food": 20.679259, "Metals": 12.751078, "Precious_Metals": 3.268735, "Pauran_raw": 12.850790, "Pauran": 12.994822},
+    {"Date": "1960-07", "Energy": 2.134449, "Food": 20.820773, "Metals": 12.805475, "Precious_Metals": 3.268735, "Pauran_raw": 12.923715, "Pauran": 12.927467},
+    {"Date": "1960-08", "Energy": 2.134449, "Food": 21.073486, "Metals": 12.650771, "Precious_Metals": 3.268735, "Pauran_raw": 12.978389, "Pauran": 12.917631},
+    {"Date": "1960-09", "Energy": 2.134449, "Food": 21.305990, "Metals": 12.501877, "Precious_Metals": 3.268735, "Pauran_raw": 13.026722, "Pauran": 12.976275},
+    {"Date": "1960-10", "Energy": 2.134449, "Food": 20.319184, "Metals": 12.324305, "Precious_Metals": 3.268735, "Pauran_raw": 12.578728, "Pauran": 12.861280},
+    {"Date": "1960-11", "Energy": 2.134449, "Food": 19.787757, "Metals": 12.473067, "Precious_Metals": 3.268735, "Pauran_raw": 12.410786, "Pauran": 12.672079},
+    {"Date": "1960-12", "Energy": 2.134449, "Food": 20.516910, "Metals": 12.412539, "Precious_Metals": 3.268735, "Pauran_raw": 12.684289, "Pauran": 12.557935}
+  ]
+}
