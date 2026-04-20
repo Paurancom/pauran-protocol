@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pauran Comparison Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0a0a08;
+    --surface: #111110;
+    --border:  #222220;
+    --text:    #e8e6df;
+    --muted:   #6b6960;
+    --accent:  #c8b97a;
+    --red:     #c87a7a;
+    --green:   #7ac88a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,185,122,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,185,122,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,8,0.85);
+    backdrop-filter: blur(12px);
+  }
+
+  .nav-logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 20px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* MAIN */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 140px 40px 80px;
+  }
+
+  .page-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .page-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .page-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 40px;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .page-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 48px;
+    max-width: 520px;
+  }
+
+  /* LOADING */
+  .data-status {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .status-dot.ready { background: var(--green); animation: none; }
+  .status-dot.error { background: var(--red); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50%       { opacity: 1; }
+  }
+
+  /* FORM */
+  .calc-form {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 40px;
+    margin-bottom: 2px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .form-row-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    -webkit-appearance: none;
+  }
+
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5);
+    cursor: pointer;
+  }
+
+  .calc-btn {
+    width: 100%;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 8px;
+  }
+
+  .calc-btn:hover { opacity: 0.85; }
+  .calc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ERROR */
+  .error-msg {
+    display: none;
+    font-size: 11px;
+    color: var(--red);
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid rgba(200,122,122,0.3);
+    background: rgba(200,122,122,0.05);
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* RESULT */
+  .result-section {
+    display: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 40px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .result-section.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .result-main {
+    font-family: 'Instrument Serif', serif;
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .result-main.positive { color: var(--green); }
+  .result-main.negative { color: var(--red); }
+
+  .result-sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    letter-spacing: 0.05em;
+  }
+
+  .result-nominal {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-nominal strong { color: var(--text); }
+
+  .result-pauran-vals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pval-item { display: flex; flex-direction: column; gap: 4px; }
+  .pval-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .pval-value { font-size: 16px; color: var(--text); }
+
+  .interpretation {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+    padding: 20px;
+    border-left: 2px solid var(--accent);
+    background: rgba(200,185,122,0.03);
+  }
+
+  .disclaimer {
+    margin-top: 32px;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  /* FOOTER */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-left { color: var(--muted); font-size: 11px; }
+  .footer-right a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .footer-right a:hover { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    main { padding: 120px 20px 60px; }
+    .form-row { grid-template-columns: 1fr; }
+    .result-main { font-size: 48px; }
+    footer { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">Pauran</a>
+  <ul class="nav-links">
+    <li><a href="/#how">How it works</a></li>
+    <li><a href="/#data">Data</a></li>
+    <li><a href="https://github.com/Paurancom/pauran-protocol" target="_blank">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<main>
+  <div class="page-label">Tool</div>
+  <h1 class="page-title">Pauran Comparison Tool</h1>
+  <p class="page-desc">
+    Compare how an asset's price change relates to global production cost dynamics.<br>
+    This tool adjusts nominal price changes using the Pauran index.
+  </p>
+
+  <div class="data-status" id="dataStatus">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Loading Pauran data...</span>
+  </div>
+
+  <div class="calc-form">
+    <div class="form-row-label">Start Point</div>
+    <div class="form-row">
+      <div class="field">
+        <label for="startDate">Date</label>
+        <input type="month" id="startDate" placeholder="YYYY-MM">
+      </div>
+      <div class="field">
+        <label for="startPrice">Price (USD)</label>
+        <input type="number" id="startPrice" placeholder="e.g. 1000" min="0" step="any">
+      </div>
+    </div>
+
+    <div class="form-row-label">End Point</div>
+    <div class="form-row">
+      <div class="field">
+        <label for="endDate">Date</label>
+        <input type="month" id="endDate" placeholder="YYYY-MM">
+      </div>
+      <div class="field">
+        <label for="endPrice">Price (USD)</label>
+        <input type="number" id="endPrice" placeholder="e.g. 2500" min="0" step="any">
+      </div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn" onclick="calculate()" disabled>Calculate</button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="result-section" id="resultSection">
+    <div class="result-label">Pauran-adjusted Change</div>
+    <div class="result-main" id="adjustedChange">—</div>
+    <div class="result-sublabel">adjusted for global production cost dynamics</div>
+
+    <div class="result-nominal">
+      Nominal change: <strong id="nominalChange">—</strong>
+    </div>
+
+    <div class="result-pauran-vals">
+      <div class="pval-item">
+        <span class="pval-label">Pauran at start</span>
+        <span class="pval-value" id="pauranStart">—</span>
+      </div>
+      <div class="pval-item">
+        <span class="pval-label">Pauran at end</span>
+        <span class="pval-value" id="pauranEnd">—</span>
+      </div>
+    </div>
+
+    <div class="interpretation" id="interpretation"></div>
+
+    <div class="disclaimer">
+      This is a comparison against Pauran-indexed production cost dynamics —
+      not a measure of "true" or "intrinsic" value.
+      Pauran-adjusted change reflects performance relative to global commodity production costs.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-left">Pauran Protocol v2 · Production-based global value index</div>
+  <div class="footer-right"><a href="/">← Back to index</a></div>
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const JSON_URL = 'https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/pauran_output.json';
+
+let pauranMap = {};  // { "2023-03": 132.45, ... }
+let dataLoaded = false;
+
+async function loadData() {
+  const dot  = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const btn  = document.getElementById('calcBtn');
+
+  try {
+    const res  = await fetch(JSON_URL);
+    const json = await res.json();
+
+    json.data.forEach(row => {
+      if (row.Pauran != null) {
+        pauranMap[row.Date] = row.Pauran;
+      }
+    });
+
+    const dates = Object.keys(pauranMap).sort();
+    dataLoaded = true;
+    dot.className  = 'status-dot ready';
+    text.textContent = `Data loaded · ${dates[0]} → ${dates[dates.length - 1]} · ${dates.length} months`;
+    btn.disabled = false;
+
+  } catch (e) {
+    dot.className  = 'status-dot error';
+    text.textContent = 'Failed to load data. Check your connection.';
+  }
+}
+
+// ── CALCULATE ─────────────────────────────────────────────────────────────────
+function calculate() {
+  const errorEl  = document.getElementById('errorMsg');
+  const resultEl = document.getElementById('resultSection');
+
+  errorEl.classList.remove('visible');
+  resultEl.classList.remove('visible');
+
+  // Get inputs
+  const startDate  = document.getElementById('startDate').value.trim();
+  const endDate    = document.getElementById('endDate').value.trim();
+  const startPrice = parseFloat(document.getElementById('startPrice').value);
+  const endPrice   = parseFloat(document.getElementById('endPrice').value);
+
+  // Validate
+  if (!startDate || !endDate) {
+    return showError('Please select both start and end dates.');
+  }
+  if (isNaN(startPrice) || startPrice <= 0) {
+    return showError('Start price must be a positive number.');
+  }
+  if (isNaN(endPrice) || endPrice <= 0) {
+    return showError('End price must be a positive number.');
+  }
+  if (startDate >= endDate) {
+    return showError('End date must be after start date.');
+  }
+
+  // Look up Pauran values (exact match, no interpolation)
+  const pStart = pauranMap[startDate];
+  const pEnd   = pauranMap[endDate];
+
+  if (pStart == null) {
+    return showError(`Data not available for selected date: ${startDate}`);
+  }
+  if (pEnd == null) {
+    return showError(`Data not available for selected date: ${endDate}`);
+  }
+
+  // Protocol formula
+  const nominalChange  = (endPrice / startPrice) - 1;
+  const adjustedChange = (endPrice / pEnd) / (startPrice / pStart) - 1;
+
+  // Render result
+  const adjEl  = document.getElementById('adjustedChange');
+  const nomEl  = document.getElementById('nominalChange');
+  const pStartEl = document.getElementById('pauranStart');
+  const pEndEl   = document.getElementById('pauranEnd');
+  const interpEl = document.getElementById('interpretation');
+
+  const adjPct = (adjustedChange * 100).toFixed(2);
+  const nomPct = (nominalChange  * 100).toFixed(2);
+
+  adjEl.textContent = (adjustedChange >= 0 ? '+' : '') + adjPct + '%';
+  adjEl.className   = 'result-main ' + (adjustedChange >= 0 ? 'positive' : 'negative');
+
+  nomEl.textContent    = (nominalChange >= 0 ? '+' : '') + nomPct + '%';
+  pStartEl.textContent = pStart.toFixed(4) + '  (' + startDate + ')';
+  pEndEl.textContent   = pEnd.toFixed(4)   + '  (' + endDate + ')';
+
+  interpEl.textContent = adjustedChange > 0
+    ? 'Your asset outperformed global production costs over this period.'
+    : 'Your asset underperformed relative to global production costs over this period.';
+
+  resultEl.classList.add('visible');
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
