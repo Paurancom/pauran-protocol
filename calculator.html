@@ -279,9 +279,10 @@
     margin-bottom: 32px;
     padding-bottom: 32px;
     border-bottom: 1px solid var(--border);
+    opacity: 0.7;
   }
 
-  .result-nominal strong { color: var(--text); }
+  .result-nominal strong { color: var(--muted); }
 
   .result-pauran-vals {
     display: grid;
@@ -300,10 +301,59 @@
     font-size: 13px;
     color: var(--text);
     line-height: 1.8;
-    padding: 20px;
+    padding: 24px;
     border-left: 2px solid var(--accent);
     background: rgba(200,185,122,0.03);
   }
+
+  .interp-main {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+
+  .interp-what-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .interp-what {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.9;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .interp-hook {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--accent);
+    line-height: 1.5;
+  }
+
+  .try-again-btn {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .try-again-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   .disclaimer {
     margin-top: 32px;
@@ -428,6 +478,8 @@
       not a measure of "true" or "intrinsic" value.
       Pauran-adjusted change reflects performance relative to global commodity production costs.
     </div>
+
+    <button class="try-again-btn" onclick="resetForm()">Try another asset →</button>
   </div>
 </main>
 
@@ -530,9 +582,36 @@ function calculate() {
   pStartEl.textContent = pStart.toFixed(4) + '  (' + startDate + ')';
   pEndEl.textContent   = pEnd.toFixed(4)   + '  (' + endDate + ')';
 
-  interpEl.textContent = adjustedChange > 0
-    ? 'Your asset outperformed global production costs over this period.'
-    : 'Your asset underperformed relative to global production costs over this period.';
+  // Interpretation language
+  const nomPctAbs  = Math.abs(nominalChange  * 100).toFixed(2);
+  const adjPctAbs  = Math.abs(adjustedChange * 100).toFixed(2);
+  const nomDir     = nominalChange  >= 0 ? 'gained' : 'lost';
+  const nomSign    = nominalChange  >= 0 ? '+' : '-';
+  const adjDir     = adjustedChange >= 0 ? 'outperformed' : 'underperformed';
+
+  let interpretation = '';
+  let whatThisMeans  = '';
+
+  if (adjustedChange >= 0 && nominalChange >= 0) {
+    interpretation = 'Your asset outperformed global production costs over this period.';
+    whatThisMeans  = `Your asset gained ${nomSign}${nomPctAbs}% in USD and rose faster than global production costs. Its relative value increased.`;
+  } else if (adjustedChange < 0 && nominalChange >= 0) {
+    interpretation = 'Your asset increased in price, but lost value relative to global production costs.';
+    whatThisMeans  = `Even though your asset gained +${nomPctAbs}% in USD, global production costs increased faster.\n\nAs a result, its relative value declined.`;
+  } else if (adjustedChange >= 0 && nominalChange < 0) {
+    interpretation = 'Your asset fell in price, but outperformed global production costs.';
+    whatThisMeans  = `Even though your asset lost -${nomPctAbs}% in USD, global production costs fell even further.\n\nIn relative terms, it held its value.`;
+  } else {
+    interpretation = 'Your asset lost value in both nominal and production-adjusted terms.';
+    whatThisMeans  = `Your asset lost -${nomPctAbs}% in USD and also underperformed global production costs.\n\nIts relative value declined on both measures.`;
+  }
+
+  interpEl.innerHTML = `
+    <div class="interp-main">${interpretation}</div>
+    <div class="interp-what-label">What this means</div>
+    <div class="interp-what">${whatThisMeans.replace(/\n\n/g, '<br><br>')}</div>
+    <div class="interp-hook">Most assets rise in price. Few rise in real terms.</div>
+  `;
 
   resultEl.classList.add('visible');
 }
@@ -541,6 +620,16 @@ function showError(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;
   el.classList.add('visible');
+}
+
+function resetForm() {
+  document.getElementById('startDate').value  = '';
+  document.getElementById('endDate').value    = '';
+  document.getElementById('startPrice').value = '';
+  document.getElementById('endPrice').value   = '';
+  document.getElementById('resultSection').classList.remove('visible');
+  document.getElementById('errorMsg').classList.remove('visible');
+  document.getElementById('startDate').focus();
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
