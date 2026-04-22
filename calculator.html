@@ -24,12 +24,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-
-  body::before {
+    font-size: 15px;
     content: '';
     position: fixed;
     inset: 0;
@@ -452,21 +447,21 @@
   </div>
 
   <div class="result-section" id="resultSection">
-    <div class="result-label">Pauran-adjusted Change</div>
+    <div class="result-label">Real Change (Pauran-Adjusted)</div>
     <div class="result-main" id="adjustedChange">—</div>
     <div class="result-sublabel">adjusted for global production cost dynamics</div>
 
     <div class="result-nominal">
-      Nominal change: <strong id="nominalChange">—</strong>
+      Nominal change (USD): <strong id="nominalChange">—</strong>
     </div>
 
     <div class="result-pauran-vals">
       <div class="pval-item">
-        <span class="pval-label">Pauran at start</span>
+        <span class="pval-label">Start</span>
         <span class="pval-value" id="pauranStart">—</span>
       </div>
       <div class="pval-item">
-        <span class="pval-label">Pauran at end</span>
+        <span class="pval-label">End</span>
         <span class="pval-value" id="pauranEnd">—</span>
       </div>
     </div>
@@ -474,9 +469,8 @@
     <div class="interpretation" id="interpretation"></div>
 
     <div class="disclaimer">
-      This is a comparison against Pauran-indexed production cost dynamics —
-      not a measure of "true" or "intrinsic" value.
-      Pauran-adjusted change reflects performance relative to global commodity production costs.
+      Pauran compares asset prices against global production cost dynamics.<br>
+      It does not measure intrinsic value — only relative performance.
     </div>
 
     <button class="try-again-btn" onclick="resetForm()">Try another asset →</button>
@@ -579,8 +573,8 @@ function calculate() {
   adjEl.className   = 'result-main ' + (adjustedChange >= 0 ? 'positive' : 'negative');
 
   nomEl.textContent    = (nominalChange >= 0 ? '+' : '') + nomPct + '%';
-  pStartEl.textContent = pStart.toFixed(4) + '  (' + startDate + ')';
-  pEndEl.textContent   = pEnd.toFixed(4)   + '  (' + endDate + ')';
+  pStartEl.textContent = `(${startDate}): ${pStart.toFixed(2)}`;
+  pEndEl.textContent   = `(${endDate}): ${pEnd.toFixed(2)}`;
 
   // Interpretation language
   const nomPctAbs  = Math.abs(nominalChange  * 100).toFixed(2);
