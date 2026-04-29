@@ -1038,9 +1038,19 @@ async function loadPrices(){
     const gC=await(await fetch('https://freegoldapi.com/data/latest.csv')).text();
     const xau=parseFloat(gC.trim().split('\n').pop().split(',')[1]);
     GOLD_TL=(xau/TROY)*USD_TL;
+    // Ratio CSV format: date, price, silver_oz_per_gold_oz
+    // gsr = kaç oz gümüş 1 oz altına eşit (örn: 88)
+    // gümüş USD/oz = altın USD/oz / gsr
     const rC=await(await fetch('https://freegoldapi.com/data/gold_silver_ratio_enriched.csv')).text();
-    const gsr=parseFloat(rC.trim().split('\n').pop().split(',')[2]);
-    SILVER_TL=((xau/gsr)/TROY)*USD_TL;
+    const rLines=rC.trim().split('\n').filter(l=>l.trim()&&!l.startsWith('date'));
+    const rLast=rLines[rLines.length-1].split(',');
+    const gsr=parseFloat(rLast[2]);
+    if(gsr>10&&gsr<300&&!isNaN(gsr)){
+      SILVER_TL=((xau/gsr)/TROY)*USD_TL;
+    } else {
+      // Fallback: güncel gold/silver ratio ~88
+      SILVER_TL=((xau/88)/TROY)*USD_TL;
+    }
     $('v-usdtl').textContent=USD_TL.toFixed(2)+' ₺';
     $('v-goldtl').textContent=N(GOLD_TL)+' ₺';
     $('v-silvertl').textContent=N(SILVER_TL)+' ₺';
