@@ -1,974 +1,1234 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pauran – Global Value Index</title>
+<title>Pauran — Portföy Koruma Endeksi</title>
+<meta name="description" content="Pauran, Türk yatırımcısının BIST portföyünü piyasa düşüşlerine karşı koruyan, matematiksel olarak türetilmiş şeffaf bir hedge endeksidir.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:        #0a0a08;
-    --surface:   #111110;
-    --border:    #222220;
-    --text:      #e8e6df;
-    --muted:     #6b6960;
-    --accent:    #c8b97a;
-    --accent2:   #7ab8c8;
-    --red:       #c87a7a;
-    --green:     #7ac88a;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 15px;
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(200,185,122,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(200,185,122,0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── NAV ── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 40px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(10,10,8,0.85);
-    backdrop-filter: blur(12px);
-  }
-
-  .nav-logo {
-    font-family: 'Instrument Serif', serif;
-    font-size: 20px;
-    letter-spacing: 0.02em;
-    color: var(--accent);
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    list-style: none;
-  }
-
-  .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    transition: color 0.2s;
-  }
-
-  .nav-links a:hover { color: var(--text); }
-
-  /* ── HERO ── */
-  .hero {
-    position: relative;
-    z-index: 1;
-    padding: 160px 40px 80px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  .hero-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .hero-label::before {
-    content: '';
-    display: inline-block;
-    width: 24px;
-    height: 1px;
-    background: var(--accent);
-  }
-
-  .hero-value {
-    font-family: 'Instrument Serif', serif;
-    font-size: clamp(64px, 10vw, 120px);
-    line-height: 0.9;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    margin-bottom: 16px;
-  }
-
-  .hero-value span {
-    color: var(--accent);
-  }
-
-  .hero-meta {
-    display: flex;
-    gap: 40px;
-    margin-top: 32px;
-    flex-wrap: wrap;
-  }
-
-  .meta-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .meta-label {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .meta-value {
-    font-size: 15px;
-    color: var(--text);
-  }
-
-  .meta-value.up   { color: var(--green); }
-  .meta-value.down { color: var(--red); }
-
-  /* ── CHART ── */
-  .chart-section {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 40px 80px;
-  }
-
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .chart-title {
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .chart-filters {
-    display: flex;
-    gap: 8px;
-  }
-
-  .filter-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    padding: 6px 14px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s;
-  }
-
-  .filter-btn:hover, .filter-btn.active {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .chart-wrap {
-    border: 1px solid var(--border);
-    padding: 32px;
-    background: var(--surface);
-    position: relative;
-  }
-
-  .chart-wrap canvas { max-height: 340px; }
-
-  /* ── DIVIDER ── */
-  .divider {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 40px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── HOW IT WORKS ── */
-  .how-section {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 80px 40px;
-  }
-
-  .section-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 48px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .section-label::before {
-    content: '';
-    display: inline-block;
-    width: 24px;
-    height: 1px;
-    background: var(--accent);
-  }
-
-  .formula-block {
-    border: 1px solid var(--border);
-    background: var(--surface);
-    padding: 40px;
-    margin-bottom: 48px;
-  }
-
-  .formula-title {
-    font-family: 'Instrument Serif', serif;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 24px;
-    font-style: italic;
-  }
-
-  .formula-text {
-    font-size: 16px;
-    color: var(--accent);
-    line-height: 2;
-    letter-spacing: 0.02em;
-  }
-
-  .formula-text .comment {
-    color: var(--muted);
-    font-size: 11px;
-  }
-
-  .components-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border);
-    margin-bottom: 48px;
-  }
-
-  .component-item {
-    background: var(--surface);
-    padding: 32px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .component-weight {
-    font-family: 'Instrument Serif', serif;
-    font-size: 40px;
-    line-height: 1;
-    color: var(--accent);
-  }
-
-  .component-name {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .component-bar {
-    height: 2px;
-    background: var(--border);
-    position: relative;
-    margin-top: 8px;
-  }
-
-  .component-bar::after {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    background: var(--accent);
-    width: var(--pct);
-    transition: width 1s ease;
-  }
-
-  /* ── PRINCIPLES ── */
-  .principles {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-  }
-
-  .principle-item {
-    background: var(--surface);
-    padding: 32px 24px;
-  }
-
-  .principle-num {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-    margin-bottom: 16px;
-  }
-
-  .principle-title {
-    font-family: 'Instrument Serif', serif;
-    font-size: 18px;
-    color: var(--text);
-    margin-bottom: 12px;
-  }
-
-  .principle-desc {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-
-  /* ── DOWNLOAD ── */
-  .download-section {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 40px 80px;
-  }
-
-  .download-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-  }
-
-  .download-item {
-    background: var(--surface);
-    padding: 40px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-decoration: none;
-    color: inherit;
-    transition: background 0.2s;
-    cursor: pointer;
-  }
-
-  .download-item:hover { background: #161614; }
-
-  .download-type {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .download-name {
-    font-family: 'Instrument Serif', serif;
-    font-size: 24px;
-    color: var(--text);
-  }
-
-  .download-desc {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.7;
-    flex: 1;
-  }
-
-  .download-arrow {
-    font-size: 18px;
-    color: var(--muted);
-    transition: transform 0.2s, color 0.2s;
-  }
-
-  .download-item:hover .download-arrow {
-    transform: translate(4px, -4px);
-    color: var(--accent);
-  }
-
-  /* ── FOOTER ── */
-  footer {
-    position: relative;
-    z-index: 1;
-    border-top: 1px solid var(--border);
-    padding: 40px;
-    max-width: 1100px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .footer-left {
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.8;
-  }
-
-  .footer-left strong {
-    color: var(--text);
-    font-weight: 400;
-  }
-
-  .footer-right {
-    display: flex;
-    gap: 24px;
-  }
-
-  .footer-right a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    transition: color 0.2s;
-  }
-
-  .footer-right a:hover { color: var(--accent); }
-
-  /* ── LOADING ── */
-  .loading {
-    color: var(--muted);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 0.4; }
-    50%       { opacity: 1; }
-  }
-
-  /* ── FADE IN ── */
-  .fade-in {
-    opacity: 0;
-    transform: translateY(16px);
-    animation: fadeIn 0.6s ease forwards;
-  }
-
-  @keyframes fadeIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .fade-in:nth-child(1) { animation-delay: 0.1s; }
-  .fade-in:nth-child(2) { animation-delay: 0.2s; }
-  .fade-in:nth-child(3) { animation-delay: 0.3s; }
-
-  .hero-tagline {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.8;
-    margin-top: 20px;
-    margin-bottom: 8px;
-    max-width: 560px;
-  }
-
-  .diff-block {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-top: 48px;
-    flex-wrap: wrap;
-  }
-
-  .diff-item {
-    font-size: 12px;
-    color: var(--text);
-    letter-spacing: 0.04em;
-  }
-
-  .diff-sep {
-    color: var(--border);
-  }
-
-  .reproduce-block {
-    margin-top: 40px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    padding: 32px;
-  }
-
-  .reproduce-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 8px;
-  }
-
-  .reproduce-desc {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 20px;
-  }
-
-  .reproduce-code {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 16px 20px;
-    font-size: 12px;
-    color: var(--text);
-    line-height: 2;
-  }
-
-  .code-comment { color: var(--muted); }
-
-  .why-block {
-    font-size: 15px;
-    color: var(--text);
-    line-height: 1.9;
-    margin-bottom: 48px;
-    padding-left: 2px;
-    border-left: 2px solid var(--accent);
-    padding-left: 20px;
-  }
-
-  .cta-block {
-    margin-top: 40px;
-    padding: 40px;
-    border: 1px solid var(--accent);
-    background: rgba(200,185,122,0.03);
-  }
-
-  .cta-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 24px;
-  }
-
-  .cta-items {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .cta-item {
-    display: flex;
-    gap: 16px;
-    font-size: 13px;
-    color: var(--text);
-  }
-
-  .cta-dash { color: var(--accent); }
-
-  .coming-soon {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 2px 8px;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
-
-  @media (max-width: 768px) {
-    nav { padding: 16px 20px; }
-    .hero, .chart-section, .how-section, .download-section { padding-left: 20px; padding-right: 20px; }
-    .components-grid { grid-template-columns: repeat(2, 1fr); }
-    .principles { grid-template-columns: 1fr; }
-    .download-grid { grid-template-columns: 1fr; }
-    .hero-value { font-size: 64px; }
-    footer { padding: 32px 20px; }
-  }
+:root {
+  --gold: #C8A96E;
+  --gold-dim: #8B7244;
+  --dark: #0E0E0E;
+  --dark2: #161616;
+  --dark3: #1E1E1E;
+  --dark4: #252525;
+  --border: rgba(200,169,110,0.15);
+  --border2: rgba(255,255,255,0.06);
+  --text: #E8E4DC;
+  --text2: #9A9590;
+  --text3: #5A5550;
+  --green: #4A8C5C;
+  --green-bg: rgba(74,140,92,0.12);
+  --red: #8C4A4A;
+  --red-bg: rgba(140,74,74,0.12);
+  --blue: #4A6E8C;
+  --blue-bg: rgba(74,110,140,0.15);
+  --blue-bright: #6B9FCC;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--dark);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 48px;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 50%, rgba(200,169,110,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(74,110,140,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200,169,110,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,169,110,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  max-width: 720px;
+}
+
+.hero-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-eyebrow::after {
+  content: '';
+  display: inline-block;
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.4;
+}
+
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+  color: var(--text);
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.hero-desc {
+  font-size: 17px;
+  color: var(--text2);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+}
+
+.hero-cta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--gold);
+  color: var(--dark);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover { background: #D4B87A; transform: translateY(-1px); }
+
+.btn-ghost {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.btn-ghost:hover { color: var(--gold); }
+
+.hero-stats {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-item {
+  background: var(--dark2);
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+  min-width: 180px;
+}
+
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: var(--gold);
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.scroll-line {
+  width: 40px;
+  height: 1px;
+  background: var(--text3);
+  animation: scrollAnim 2s ease-in-out infinite;
+}
+
+@keyframes scrollAnim {
+  0%, 100% { width: 40px; opacity: 0.4; }
+  50% { width: 60px; opacity: 1; }
+}
+
+/* ── TOOL SECTION ── */
+.tool-section {
+  background: var(--dark2);
+  border-top: 1px solid var(--border);
+}
+
+.tool-header {
+  padding: 80px 48px 48px;
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.tool-header-left .section-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.tool-header-left h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.tool-header-right {
+  font-size: 13px;
+  color: var(--text2);
+  max-width: 340px;
+  text-align: right;
+  line-height: 1.6;
+}
+
+/* ── PRICES ── */
+.prices-wrap {
+  padding: 0 48px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.prices-inner {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-top: none;
+  max-width: 100%;
+  width: 100%;
+}
+
+.price-chip {
+  flex: 1;
+  padding: 16px 24px;
+  border-right: 1px solid var(--border);
+}
+
+.price-chip:last-child { border-right: none; flex: 1.5; }
+
+.pc-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.dot { width: 5px; height: 5px; border-radius: 50%; }
+.dot-g { background: var(--green); }
+.dot-e { background: var(--red); }
+.dot-w { background: var(--gold-dim); }
+
+.pc-v {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--text);
+}
+
+.pc-v.loading {
+  color: var(--text3);
+  animation: pulse 1.4s ease infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+.pc-src {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+
+/* ── TOOL BODY ── */
+.tool-body {
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.tool-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.panel {
+  background: var(--dark3);
+  border: 1px solid var(--border2);
+  padding: 28px 32px;
+}
+
+.panel-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 4px;
+}
+
+.panel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+/* Asset rows */
+.asset-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 54px 44px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.an { font-size: 13px; font-weight: 400; color: var(--text); }
+.as { font-size: 10px; color: var(--text3); margin-top: 1px; font-family: 'DM Mono', monospace; }
+
+input[type=number] {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  border: 1px solid var(--border);
+  background: var(--dark4);
+  color: var(--text);
+  text-align: right;
+  transition: border-color 0.2s;
+  -moz-appearance: textfield;
+}
+
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+input[type=number]:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+
+.at { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text2); text-align: right; }
+.ap { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); text-align: right; }
+
+.total-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--dark4);
+  border: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.total-bar-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+.total-bar-val { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--gold); }
+
+/* Risk panel */
+.risk-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.risk-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border: 1px solid;
+}
+
+.rb-low   { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+.rb-med   { border-color: #8C7A3A; color: #C8B060; background: rgba(140,122,58,0.12); }
+.rb-high  { border-color: #8C5A3A; color: #C89060; background: rgba(140,90,58,0.12); }
+.rb-xhigh { border-color: var(--red); color: #C07070; background: var(--red-bg); }
+
+.crisis-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border2);
+  font-size: 12px;
+}
+
+.crisis-row:last-child { border-bottom: none; }
+.cr-name { color: var(--text2); font-family: 'DM Mono', monospace; font-size: 11px; }
+.cr-pos { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--green); }
+.cr-neg { font-family: 'DM Mono', monospace; font-weight: 500; color: #C07070; }
+
+/* Target */
+.target-desc { font-size: 12px; color: var(--text2); margin-bottom: 16px; line-height: 1.6; }
+
+.topts { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.topt {
+  padding: 6px 16px;
+  border: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  background: var(--dark4);
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+.topt:hover { border-color: var(--gold-dim); color: var(--gold); }
+.topt.active { background: var(--gold); color: var(--dark); border-color: var(--gold); font-weight: 500; }
+
+/* Advice panel */
+.advice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border2);
+}
+
+.advice-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px; }
+.advice-pct { font-family: 'Playfair Display', serif; font-size: 44px; color: var(--gold); line-height: 1; }
+.advice-pct-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); margin-top: 6px; }
+.advice-tl { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); text-align: right; margin-bottom: 4px; }
+.advice-tl-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); text-align: right; }
+
+/* Comp table */
+.comp-table { width: 100%; border-collapse: collapse; }
+.comp-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.comp-table td { padding: 9px 10px; border-bottom: 1px solid var(--border2); vertical-align: middle; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:nth-child(even) td { background: rgba(255,255,255,0.01); }
+.cnm { font-size: 12px; font-weight: 400; color: var(--text); }
+.csb { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); margin-top: 2px; }
+.cw-bar { width: 48px; }
+.wbar-track { width: 100%; height: 3px; background: var(--dark4); border-radius: 2px; overflow: hidden; margin-bottom: 3px; }
+.wbar-fill { height: 3px; background: var(--gold-dim); border-radius: 2px; }
+.wbar-pct { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text2); }
+.ctl { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
+.amt { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--blue-bright); font-weight: 500; }
+.tag-auto { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--green); letter-spacing: 0.05em; }
+.tag-man  { font-family: 'DM Mono', monospace; font-size: 9px; color: #C8B060; letter-spacing: 0.05em; }
+
+/* Results */
+.results-wrap { padding: 0 48px 48px; }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.rcard {
+  background: var(--dark3);
+  border: 1px solid var(--border2);
+  padding: 20px 24px;
+}
+
+.rl {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.rv {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.rs { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+
+.saved-banner {
+  background: var(--dark3);
+  border: 1px solid rgba(200,169,110,0.25);
+  padding: 20px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.saved-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold-dim); text-transform: uppercase; letter-spacing: 0.12em; }
+.saved-val { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--gold); }
+
+.vtabs-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.vtab {
+  padding: 8px 16px;
+  border: 1px solid var(--border2);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  background: var(--dark3);
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+.vtab:hover { border-color: var(--border); color: var(--text); }
+.vtab.active { background: var(--dark4); border-color: var(--gold-dim); color: var(--gold); }
+
+.narrative {
+  background: var(--dark3);
+  border: 1px solid var(--border2);
+  border-left: 2px solid var(--gold-dim);
+  padding: 20px 28px;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+
+.narrative strong { color: var(--text); font-weight: 400; }
+
+.warn-box {
+  background: rgba(140,90,58,0.08);
+  border: 1px solid rgba(200,140,90,0.2);
+  border-left: 2px solid #C8905A;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: #C8905A;
+  margin-bottom: 2px;
+  display: none;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.03em;
+}
+
+/* ── FOOTER INFO ── */
+.footer-info {
+  border-top: 1px solid var(--border);
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 48px;
+}
+
+.fi-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  margin-bottom: 16px;
+}
+
+.fi-text { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+.fi-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+  text-decoration: none;
+  margin-top: 16px;
+  transition: color 0.2s;
+}
+
+.fi-link:hover { color: var(--gold); }
+.fi-link::after { content: '→'; }
+
+.formula-block {
+  background: var(--dark4);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--gold);
+  line-height: 1.8;
+  margin-top: 12px;
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  border-top: 1px solid var(--border2);
+  padding: 24px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bn-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--gold);
+}
+
+.bn-links { display: flex; gap: 32px; align-items: center; }
+
+.bn-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.bn-link:hover { color: var(--gold); }
+
+.bn-copy {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+}
+
+/* Divider */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 48px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .hero-stats { display: none; }
+  .tool-body { grid-template-columns: 1fr; }
+  .results-grid { grid-template-columns: 1fr 1fr; }
+  .footer-info { grid-template-columns: 1fr; gap: 32px; }
+}
+
+@media (max-width: 700px) {
+  .hero { padding: 80px 24px 48px; }
+  .tool-header { padding: 48px 24px 32px; flex-direction: column; }
+  .tool-header-right { text-align: left; max-width: 100%; }
+  .prices-wrap { padding: 0 24px; }
+  .tool-body { padding: 24px; }
+  .results-wrap { padding: 0 24px 24px; }
+  .footer-info { padding: 32px 24px; }
+  .bottom-nav { padding: 20px 24px; flex-direction: column; gap: 16px; }
+  .results-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 40px; }
+  .asset-row { grid-template-columns: 1fr 100px 40px; }
+  .asset-row .ap { display: none; }
+  .section-divider { margin: 0 24px; }
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">Pauran</div>
-  <ul class="nav-links">
-    <li><a href="#how">How it works</a></li>
-    <li><a href="#data">Data</a></li>
-    <li><a href="https://github.com/Paurancom/pauran-protocol" target="_blank">GitHub ↗</a></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
+<!-- ── HERO ── -->
 <section class="hero">
-  <div class="hero-label fade-in">Global Value Index · Production-Based · v2</div>
-  <div class="hero-value fade-in">
-    <span id="latest-value">—</span>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Pauran TR v3</div>
+    <h1 class="hero-title">Portföyünü<br><em>koru.</em></h1>
+    <p class="hero-desc">BIST yatırımcısı için matematiksel olarak türetilmiş, şeffaf portföy koruma endeksi. 19 yıllık tarihsel veri. 6 büyük kriz testi. Formül açık.</p>
+    <div class="hero-cta">
+      <a href="#tool" class="btn-primary">Hesaplayıcıyı Aç</a>
+      <a href="#nasil-calisir" class="btn-ghost">Nasıl çalışır?</a>
+    </div>
   </div>
-  <div class="hero-tagline fade-in">
-    A global reference index tracking real-world production costs.<br>
-    Designed to measure value independent of fiat and speculation.
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-label">Kriz isabeti</div>
+      <div class="stat-value">6/6</div>
+      <div class="stat-sub">Tüm krizlerde pozitif</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Ortalama kriz getirisi</div>
+      <div class="stat-value">+%43</div>
+      <div class="stat-sub">TL bazında</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Analiz dönemi</div>
+      <div class="stat-value">19 yıl</div>
+      <div class="stat-sub">2006–2024</div>
+    </div>
   </div>
-  <div class="hero-meta fade-in">
-    <div class="meta-item">
-      <span class="meta-label">Period</span>
-      <span class="meta-value" id="latest-date">—</span>
+
+  <div class="scroll-hint">
+    <span class="scroll-line"></span>
+    Aşağı kaydır
+  </div>
+</section>
+
+<!-- ── TOOL ── -->
+<section class="tool-section" id="tool">
+
+  <div class="tool-header">
+    <div class="tool-header-left">
+      <div class="section-tag">Portföy Hesaplayıcısı</div>
+      <h2>Pauran Hedge Aracı</h2>
     </div>
-    <div class="meta-item">
-      <span class="meta-label">Raw Index</span>
-      <span class="meta-value" id="latest-raw">—</span>
+    <div class="tool-header-right">
+      Portföyünü gir, kriz toleransını seç. Sistem hangi varlıktan ne kadar alman gerektiğini bugünkü anlık fiyatlarla hesaplar.
     </div>
-    <div class="meta-item">
-      <span class="meta-label">Base Year</span>
-      <span class="meta-value">2010 = 100</span>
+  </div>
+
+  <!-- Canlı fiyatlar -->
+  <div class="prices-wrap">
+    <div class="prices-inner">
+      <div class="price-chip">
+        <div class="pc-label"><span class="dot dot-w" id="dot1"></span>USD / TL</div>
+        <div class="pc-v loading" id="v-usdtl">—</div>
+      </div>
+      <div class="price-chip">
+        <div class="pc-label"><span class="dot dot-w" id="dot2"></span>Altın / gram</div>
+        <div class="pc-v loading" id="v-goldtl">—</div>
+      </div>
+      <div class="price-chip">
+        <div class="pc-label"><span class="dot dot-w" id="dot3"></span>Gümüş / gram</div>
+        <div class="pc-v loading" id="v-silvertl">—</div>
+      </div>
+      <div class="price-chip">
+        <div class="pc-label">Kaynak</div>
+        <div class="pc-src" id="v-src">bağlanıyor...</div>
+      </div>
     </div>
-    <div class="meta-item">
-      <span class="meta-label">Data Source</span>
-      <span class="meta-value">World Bank Pink Sheet</span>
+  </div>
+
+  <!-- Tool body: 2 sütun -->
+  <div class="tool-body">
+
+    <!-- Sol sütun -->
+    <div class="tool-col">
+
+      <!-- Adım 1: Portföy -->
+      <div class="panel">
+        <div class="panel-tag">Adım 01</div>
+        <div class="panel-title">Mevcut portföyün</div>
+        <div class="asset-row">
+          <div><div class="an">BIST 100</div><div class="as">Hisse / fon</div></div>
+          <input type="number" id="a-bist" value="200000" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-bist">200K</div>
+          <div class="ap" id="p-bist">—</div>
+        </div>
+        <div class="asset-row">
+          <div><div class="an">Bitcoin / Kripto</div><div class="as">TL değeri</div></div>
+          <input type="number" id="a-btc" value="0" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-btc">0</div>
+          <div class="ap" id="p-btc">—</div>
+        </div>
+        <div class="asset-row">
+          <div><div class="an">Altın</div><div class="as">TL değeri</div></div>
+          <input type="number" id="a-gold" value="0" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-gold">0</div>
+          <div class="ap" id="p-gold">—</div>
+        </div>
+        <div class="asset-row">
+          <div><div class="an">Döviz</div><div class="as">USD / EUR</div></div>
+          <input type="number" id="a-fx" value="0" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-fx">0</div>
+          <div class="ap" id="p-fx">—</div>
+        </div>
+        <div class="asset-row">
+          <div><div class="an">Mevduat / TL</div><div class="as">Banka, nakit</div></div>
+          <input type="number" id="a-dep" value="0" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-dep">0</div>
+          <div class="ap" id="p-dep">—</div>
+        </div>
+        <div class="asset-row">
+          <div><div class="an">Diğer</div><div class="as">Gayrimenkul vb.</div></div>
+          <input type="number" id="a-other" value="0" min="0" step="1000" oninput="calc()">
+          <div class="at" id="t-other">0</div>
+          <div class="ap" id="p-other">—</div>
+        </div>
+        <div class="total-bar">
+          <span class="total-bar-label">Toplam portföy</span>
+          <span class="total-bar-val" id="v-total">200.000 TL</span>
+        </div>
+      </div>
+
+      <!-- Adım 2: Risk profili -->
+      <div class="panel">
+        <div class="panel-tag">Adım 02</div>
+        <div class="risk-header-row">
+          <div class="panel-title" style="margin-bottom:0;">Risk profili</div>
+          <span class="risk-badge" id="risk-badge">—</span>
+        </div>
+        <div style="margin-top:20px;" id="crisis-rows">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);padding:8px 0;">Portföy değerlerini girerek başla.</div>
+        </div>
+      </div>
+
+      <!-- Adım 3: Tolerans -->
+      <div class="panel">
+        <div class="panel-tag">Adım 03</div>
+        <div class="panel-title">Kriz toleransın</div>
+        <div class="target-desc">Bir kriz döneminde portföyünün en fazla ne kadar düşmesine tahammül edebilirsin?</div>
+        <div class="topts">
+          <div class="topt active" onclick="setTarget(0,this)">−%5</div>
+          <div class="topt" onclick="setTarget(1,this)">−%10</div>
+          <div class="topt" onclick="setTarget(2,this)">−%15</div>
+          <div class="topt" onclick="setTarget(3,this)">−%20</div>
+          <div class="topt" onclick="setTarget(4,this)">−%30</div>
+        </div>
+      </div>
+
     </div>
-    <div class="meta-item">
-      <span class="meta-label">Update Frequency</span>
-      <span class="meta-value">Monthly · World Bank release</span>
+
+    <!-- Sağ sütun -->
+    <div class="tool-col">
+
+      <!-- Adım 4: Alım tavsiyesi -->
+      <div class="panel" style="flex:1;">
+        <div class="panel-tag">Adım 04</div>
+        <div class="panel-title">Pauran alım tavsiyesi</div>
+        <div class="warn-box" id="warn-box">⚠ Bu tolerans için portföyün çok riskli. Pauran tek başına yeterli olmayabilir.</div>
+        <div class="advice-header">
+          <div>
+            <div class="advice-label">Önerilen oran</div>
+            <div class="advice-pct" id="adv-pct">—</div>
+            <div class="advice-pct-sub">portföy değerinin</div>
+          </div>
+          <div>
+            <div class="advice-tl" id="adv-tl">—</div>
+            <div class="advice-tl-sub" id="adv-tl-sub">Pauran portföyü</div>
+          </div>
+        </div>
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Varlık</th>
+              <th>Ağırlık</th>
+              <th>TL</th>
+              <th>Ne kadar al</th>
+              <th>Fiyat</th>
+            </tr>
+          </thead>
+          <tbody id="comp-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Adım 5: Doğrulama -->
+  <div class="results-wrap">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:12px;">Adım 05 — Doğrulama: bu kriz senaryosunda ne olur?</div>
+    <div class="vtabs-row" id="vtabs"></div>
+    <div class="results-grid">
+      <div class="rcard">
+        <div class="rl">Portföy — Pauran yok</div>
+        <div class="rv" id="r-no">—</div>
+        <div class="rs" id="r-no-tl">—</div>
+      </div>
+      <div class="rcard">
+        <div class="rl">Pauran portföyü</div>
+        <div class="rv" id="r-pau" style="color:var(--green);">—</div>
+        <div class="rs" id="r-pau-tl">—</div>
+      </div>
+      <div class="rcard">
+        <div class="rl">Birleşik sonuç</div>
+        <div class="rv" id="r-com">—</div>
+        <div class="rs" id="r-com-tl">—</div>
+      </div>
+    </div>
+    <div class="saved-banner">
+      <span class="saved-label">Pauran sayesinde kurtarılan</span>
+      <span class="saved-val" id="r-saved">—</span>
+    </div>
+    <div class="narrative" id="narrative">Portföy değerlerini girerek başla.</div>
+  </div>
+
+</section>
+
+<!-- ── NASIL ÇALIŞIR ── -->
+<div class="section-divider"></div>
+<section id="nasil-calisir" style="padding:80px 48px;">
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:24px;">Metodoloji</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:36px;font-weight:400;margin-bottom:48px;">Pauran nasıl çalışır?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;">
+      <div style="background:var(--dark2);border:1px solid var(--border2);padding:28px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold-dim);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">01 — Veri</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;">2006–2024 arası 19 yıllık BIST, USD/TL, altın, gümüş, faiz ve TÜFE verisi. TCMB EVDS, World Bank, TÜİK kaynakları.</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border2);padding:28px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold-dim);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">02 — Optimizasyon</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;">SLSQP algoritması ile BIST+Pauran kombinasyonunun Sharpe oranı maksimize edildi. Ağırlıklar sezgisel değil, matematiksel.</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border2);padding:28px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold-dim);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">03 — Doğrulama</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;">2006–2015 eğitim, 2016–2024 bağımsız test. Out-of-sample doğrulama geçildi. 19 yılın tamamında pozitif getiri.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- CHART -->
-<section class="chart-section" id="chart">
-  <div class="chart-header">
-    <div class="chart-title">Pauran Index · Monthly Series (3M Smoothed)</div>
-    <div class="chart-filters">
-      <button class="filter-btn" onclick="filterChart(20)">20Y</button>
-      <button class="filter-btn" onclick="filterChart(40)">40Y</button>
-      <button class="filter-btn active" onclick="filterChart(0)">All</button>
+<!-- ── FOOTER INFO ── -->
+<div class="section-divider"></div>
+<div class="footer-info">
+  <div>
+    <div class="fi-title">Formül</div>
+    <div class="fi-text">Pauran TR v3 formülü matematiksel optimizasyonla türetilmiştir. Her bileşen erişilebilir ve doğrulanabilir.</div>
+    <div class="formula-block">
+      Pauran = 0.45 × Altın/TL<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.35 × USD/TL<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.12 × Gümüş/TL<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.05 × TÜFE tahvil<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.03 × Vadeli mevduat
     </div>
   </div>
-  <div class="chart-wrap">
-    <canvas id="pauranChart"></canvas>
+  <div>
+    <div class="fi-title">Tarihsel kanıt</div>
+    <div class="fi-text">6 büyük Türkiye krizi — 2008, 2011, 2013, 2015, 2018, 2021 — test edildi. Tamamında BIST düşerken Pauran pozitif getiri sağladı. Ortalama kriz getirisi +%43 TL bazında.</div>
+    <a href="https://github.com/paurancom/pauran-protocol" target="_blank" class="fi-link">White Paper</a>
   </div>
-</section>
-
-<div class="divider"></div>
-
-<!-- HOW IT WORKS -->
-<section class="how-section" id="how">
-  <div class="section-label">How it works</div>
-
-  <div class="why-block">
-    Pauran measures real-world production cost dynamics.<br>
-    It exists as a neutral reference independent of fiat systems.
+  <div>
+    <div class="fi-title">Diğer</div>
+    <div class="fi-text">Pauran henüz borsada işlem gören bir ürün değildir. Formül açık olduğundan herhangi bir yatırımcı aynı varlıkları aynı oranlarda alarak Pauran etkisini elde edebilir.</div>
+    <a href="/production-index" class="fi-link">Üretim Endeksi →</a>
   </div>
+</div>
 
-  <div class="formula-block">
-    <div class="formula-title">v2 Calculation Formula</div>
-    <div class="formula-text">
-      Pauran_raw&nbsp;=&nbsp;0.20 × Energy&nbsp;+&nbsp;0.40 × Food&nbsp;+&nbsp;0.30 × Metals&nbsp;+&nbsp;0.10 × Precious<br>
-      <span class="comment">// 3-month moving average applied to raw value</span><br>
-      Pauran_t&nbsp;&nbsp;&nbsp;=&nbsp;( raw_t + raw_{t-1} + raw_{t-2} ) / 3
-    </div>
+<!-- ── BOTTOM NAV ── -->
+<div class="bottom-nav">
+  <div class="bn-brand">Pauran</div>
+  <div class="bn-links">
+    <a href="#tool" class="bn-link">Hesaplayıcı</a>
+    <a href="#nasil-calisir" class="bn-link">Metodoloji</a>
+    <a href="/production-index" class="bn-link">Üretim Endeksi</a>
+    <a href="https://github.com/paurancom/pauran-protocol" target="_blank" class="bn-link">GitHub</a>
   </div>
-
-  <div class="components-grid">
-    <div class="component-item">
-      <div class="component-weight">40%</div>
-      <div class="component-name">Food</div>
-      <div class="component-bar" style="--pct: 40%"></div>
-    </div>
-    <div class="component-item">
-      <div class="component-weight">30%</div>
-      <div class="component-name">Metals</div>
-      <div class="component-bar" style="--pct: 30%"></div>
-    </div>
-    <div class="component-item">
-      <div class="component-weight">20%</div>
-      <div class="component-name">Energy</div>
-      <div class="component-bar" style="--pct: 20%"></div>
-    </div>
-    <div class="component-item">
-      <div class="component-weight">10%</div>
-      <div class="component-name">Precious Metals</div>
-      <div class="component-bar" style="--pct: 10%"></div>
-    </div>
-  </div>
-
-  <div class="principles">
-    <div class="principle-item">
-      <div class="principle-num">01</div>
-      <div class="principle-title">Fully Transparent</div>
-      <div class="principle-desc">Every calculation is reproducible from the same public source. No black boxes. No proprietary adjustments.</div>
-    </div>
-    <div class="principle-item">
-      <div class="principle-num">02</div>
-      <div class="principle-title">No Interpolation</div>
-      <div class="principle-desc">Missing data means no calculation for that period. The protocol never estimates or fills gaps.</div>
-    </div>
-    <div class="principle-item">
-      <div class="principle-num">03</div>
-      <div class="principle-title">Immutable History</div>
-      <div class="principle-desc">Historical values are never overwritten. New versions are additive, not destructive.</div>
-    </div>
-  </div>
-
-  <!-- DIFFERENTIATION -->
-  <div class="diff-block">
-    <div class="diff-item">Not tied to any single asset.</div>
-    <div class="diff-sep">·</div>
-    <div class="diff-item">Not driven by market sentiment.</div>
-    <div class="diff-sep">·</div>
-    <div class="diff-item">Not controlled by any authority.</div>
-  </div>
-
-  <!-- REPRODUCIBLE -->
-  <div class="reproduce-block">
-    <div class="reproduce-label">Reproducible by design</div>
-    <div class="reproduce-desc">Run the pipeline with the same source file and get identical output. Every result is independently verifiable.</div>
-    <div class="reproduce-code">
-      <span class="code-comment"># Download Pink Sheet → run pipeline → verify</span><br>
-      python3 pauran_pipeline.py CMOHistoricalDataMonthly.xlsx output
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div class="cta-block">
-    <div class="cta-label">Use Pauran as a reference</div>
-    <div class="cta-items">
-      <div class="cta-item"><span class="cta-dash">—</span><span>Benchmark assets against a production-based standard</span></div>
-      <div class="cta-item"><span class="cta-dash">—</span><span>Compare long-term value across economic cycles</span></div>
-      <div class="cta-item"><span class="cta-dash">—</span><span>Integrate via API <span class="coming-soon">coming soon</span></span></div>
-    </div>
-  </div>
-
-</section>
-
-<div class="divider"></div>
-
-<!-- DATA -->
-<section class="download-section" id="data">
-  <div class="section-label" style="margin-top: 80px;">Data</div>
-  <div class="download-grid">
-    <a class="download-item" id="dl-csv">
-      <div class="download-type">Download</div>
-      <div class="download-name">CSV Series</div>
-      <div class="download-desc">Full monthly series from 1960 to present. Energy, Food, Metals, Precious, Pauran_raw, Pauran columns.</div>
-      <div class="download-arrow">↗</div>
-    </a>
-    <a class="download-item" id="dl-json">
-      <div class="download-type">Download</div>
-      <div class="download-name">JSON</div>
-      <div class="download-desc">Same data with protocol metadata. Version, weights, data source, and generation timestamp included.</div>
-      <div class="download-arrow">↗</div>
-    </a>
-    <a class="download-item" href="https://github.com/Paurancom/pauran-protocol" target="_blank">
-      <div class="download-type">Open Source</div>
-      <div class="download-name">GitHub</div>
-      <div class="download-desc">Full protocol specification, calculation pipeline, and sample outputs. MIT licensed. Run it yourself.</div>
-      <div class="download-arrow">↗</div>
-    </a>
-    <a class="download-item" href="/calculator.html">
-      <div class="download-type">Tool</div>
-      <div class="download-name">Comparison Tool</div>
-      <div class="download-desc">Compare any asset's price change against Pauran. See nominal vs production-adjusted performance.</div>
-      <div class="download-arrow">→</div>
-    </a>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-left">
-    <strong>Pauran Protocol v2</strong><br>
-    A production-based global value index.<br>
-    Not a financial product. Not an investment recommendation.
-  </div>
-  <div class="footer-right">
-    <a href="https://github.com/Paurancom/pauran-protocol/blob/main/docs/pauran_protocol_v1.md" target="_blank">Protocol Docs</a>
-    <a href="https://www.worldbank.org/en/research/commodity-markets" target="_blank">Data Source</a>
-    <a href="https://github.com/Paurancom/pauran-protocol" target="_blank">GitHub</a>
-  </div>
-</footer>
+  <div class="bn-copy">© 2026 Pauran — Bu bir yatırım tavsiyesi değildir.</div>
+</div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────────
-// JSON verisini GitHub raw URL'den çekiyoruz.
-// Eğer CORS sorunu olursa aşağıdaki FALLBACK_DATA kullanılır.
+const TROY = 31.1035;
+const PW   = [0.45, 0.35, 0.12, 0.05, 0.03];
 
-const JSON_URL = 'https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/pauran_output.json';
+const COMPS = [
+  { name:'🟢 Gram altın',      sub:'Kuyumcu / TEFAS altın fonu',  tag:'auto' },
+  { name:'🟢 USD nakit / fon', sub:'Banka döviz / TEFAS USD fonu', tag:'auto' },
+  { name:'🟢 Gümüş',          sub:'Kuyumcu / TEFAS gümüş fonu',  tag:'auto' },
+  { name:'✏ TÜFE tahvili',    sub:'Hazine, Ziraat, Halkbank',     tag:'man'  },
+  { name:'✏ Vadeli mevduat',  sub:'Banka — 3 veya 6 aylık',      tag:'man'  },
+];
 
-// Gerçek data yüklendiğinde burası dolu gelecek.
-// Şimdilik sample data ile başlıyoruz.
-let allData = [];
-let chart   = null;
+const CRISES = [
+  { label:'2008', pauranPct:33.0, ap:[-51.6,-58.0, 40.0, 28.0,16.0, 0] },
+  { label:'2011', pauranPct:30.0, ap:[-22.3,-25.0, 36.0, 21.0, 9.5, 0] },
+  { label:'2013', pauranPct:33.0, ap:[-13.3,-30.0, 40.0, 26.0, 9.0, 0] },
+  { label:'2015', pauranPct:32.0, ap:[-16.3,-20.0, 38.0, 27.0,10.5, 0] },
+  { label:'2018', pauranPct:68.0, ap:[-20.9,-65.0, 72.0, 63.0,24.0, 0] },
+  { label:'2021', pauranPct:68.0, ap:[-20.9, 20.0, 88.0, 44.0,19.0, 0] },
+];
 
-async function loadData() {
-  try {
-    const res  = await fetch(JSON_URL);
-    const json = await res.json();
-    allData = json.data;
-  } catch (e) {
-    console.warn('Could not fetch live data, using embedded sample.');
-    allData = SAMPLE_DATA;
+const PAURAN_AVG = CRISES.reduce((s,c)=>s+c.pauranPct,0)/CRISES.length;
+const TARGETS = [-5,-10,-15,-20,-30];
+
+let USD_TL=44.85, GOLD_TL=6254, SILVER_TL=25;
+let activeTarget=0, activeVerify=0, tabsBuilt=false;
+
+const $=id=>document.getElementById(id);
+const FMT=n=>Math.round(n).toLocaleString('tr-TR')+' TL';
+const FMTK=n=>{const a=Math.abs(n);return(n<0?'-':'')+(a>=1000000?(a/1000000).toFixed(1)+'M':a>=1000?(a/1000).toFixed(0)+'K':Math.round(a)).toString()+' TL';};
+const FMTP=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
+const N=n=>Math.round(n).toLocaleString('tr-TR');
+
+async function loadPrices(){
+  try{
+    const fxD=await(await fetch('https://open.er-api.com/v6/latest/USD')).json();
+    USD_TL=fxD.rates.TRY;
+    const gC=await(await fetch('https://freegoldapi.com/data/latest.csv')).text();
+    const xau=parseFloat(gC.trim().split('\n').pop().split(',')[1]);
+    GOLD_TL=(xau/TROY)*USD_TL;
+    const rC=await(await fetch('https://freegoldapi.com/data/gold_silver_ratio_enriched.csv')).text();
+    const gsr=parseFloat(rC.trim().split('\n').pop().split(',')[2]);
+    SILVER_TL=((xau/gsr)/TROY)*USD_TL;
+    $('v-usdtl').textContent=USD_TL.toFixed(2)+' ₺';
+    $('v-goldtl').textContent=N(GOLD_TL)+' ₺';
+    $('v-silvertl').textContent=N(SILVER_TL)+' ₺';
+    ['v-usdtl','v-goldtl','v-silvertl'].forEach(id=>$(id).classList.remove('loading'));
+    ['dot1','dot2','dot3'].forEach(id=>$(id).className='dot dot-g');
+    $('v-src').textContent='er-api · freegoldapi — '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    ['v-usdtl','v-goldtl','v-silvertl'].forEach(id=>$(id).classList.remove('loading'));
+    $('v-usdtl').textContent=USD_TL.toFixed(2)+'* ₺';
+    $('v-goldtl').textContent=N(GOLD_TL)+'* ₺';
+    $('v-silvertl').textContent=N(SILVER_TL)+'* ₺';
+    ['dot1','dot2','dot3'].forEach(id=>$(id).className='dot dot-e');
+    $('v-src').textContent='* tahmini değerler';
   }
-  renderHero();
-  renderChart(allData);
+  calc();
 }
 
-function renderHero() {
-  if (!allData.length) return;
-  const last = allData[allData.length - 1];
-  document.getElementById('latest-value').textContent = last.Pauran.toFixed(2);
-  document.getElementById('latest-date').textContent  = last.Date;
-  document.getElementById('latest-raw').textContent   = last.Pauran_raw.toFixed(2);
+function setTarget(idx,el){
+  document.querySelectorAll('.topt:not(.vtab)').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  activeTarget=idx;
+  calc();
 }
 
-function renderChart(data) {
-  const labels = data.map(d => d.Date);
-  const values = data.map(d => d.Pauran);
+function setVerify(idx){
+  document.querySelectorAll('.vtab').forEach(t=>t.classList.remove('active'));
+  $('vtab-'+idx).classList.add('active');
+  activeVerify=idx;
+  renderVerify();
+}
 
-  const ctx = document.getElementById('pauranChart').getContext('2d');
+function getArr(){
+  return [
+    +$('a-bist').value||0, +$('a-btc').value||0,
+    +$('a-gold').value||0, +$('a-fx').value||0,
+    +$('a-dep').value||0,  +$('a-other').value||0,
+  ];
+}
 
-  if (chart) chart.destroy();
+function crisisPct(arr,c){
+  const total=arr.reduce((s,v)=>s+v,0);
+  return total===0?0:arr.reduce((s,v,i)=>s+v*(c.ap[i]/100),0)/total*100;
+}
 
-  const grad = ctx.createLinearGradient(0, 0, 0, 340);
-  grad.addColorStop(0,   'rgba(200,185,122,0.18)');
-  grad.addColorStop(1,   'rgba(200,185,122,0.00)');
+function getMiktar(idx,tl){
+  switch(idx){
+    case 0: return (tl/GOLD_TL).toFixed(2)+' gram';
+    case 1: return N(tl/USD_TL)+' USD';
+    case 2: return (tl/SILVER_TL).toFixed(1)+' gram';
+    case 3: return '≈ +'+N(tl*0.62)+' TL/yıl';
+    case 4: return '≈ +'+N(tl*0.45)+' TL/yıl';
+    default: return '—';
+  }
+}
 
-  chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Pauran',
-        data: values,
-        borderColor: '#c8b97a',
-        borderWidth: 1.5,
-        backgroundColor: grad,
-        fill: true,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: '#c8b97a',
-        tension: 0.3,
-      }]
-    },
-    options: {
-      responsive: true,
-      interaction: { intersect: false, mode: 'index' },
-      plugins: {
-        legend: { display: false },
-        annotation: {
-          annotations: {
-            baseline: {
-              type: 'line',
-              yMin: 100, yMax: 100,
-              borderColor: 'rgba(200,185,122,0.25)',
-              borderWidth: 1,
-              borderDash: [4, 4],
-              label: {
-                display: true,
-                content: 'Base = 100 (2010)',
-                color: 'rgba(200,185,122,0.5)',
-                font: { family: 'DM Mono', size: 10 },
-                position: 'start',
-                backgroundColor: 'transparent',
-              }
-            }
-          }
-        },
-        tooltip: {
-          backgroundColor: '#111110',
-          borderColor: '#222220',
-          borderWidth: 1,
-          titleColor: '#6b6960',
-          bodyColor: '#e8e6df',
-          titleFont: { family: 'DM Mono', size: 10 },
-          bodyFont:  { family: 'DM Mono', size: 13 },
-          padding: 12,
-          callbacks: {
-            title: items => items[0].label,
-            label: item  => `Pauran  ${item.raw.toFixed(4)}`,
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid:   { color: 'rgba(255,255,255,0.03)', drawBorder: false },
-          ticks:  { color: '#6b6960', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 10 },
-          border: { display: false },
-        },
-        y: {
-          grid:   { color: 'rgba(255,255,255,0.03)', drawBorder: false },
-          ticks:  { color: '#6b6960', font: { family: 'DM Mono', size: 10 } },
-          border: { display: false },
-        }
-      }
-    }
+function getFiyat(idx){
+  switch(idx){
+    case 0: return N(GOLD_TL)+' ₺/gr';
+    case 1: return USD_TL.toFixed(2)+' ₺/$';
+    case 2: return N(SILVER_TL)+' ₺/gr';
+    case 3: return '%62 TÜFE';
+    case 4: return '%45 faiz';
+    default: return '—';
+  }
+}
+
+function calc(){
+  const arr=getArr();
+  const ids=['bist','btc','gold','fx','dep','other'];
+  const total=arr.reduce((s,v)=>s+v,0);
+
+  arr.forEach((v,i)=>{
+    $('t-'+ids[i]).textContent=v>=1000?(v/1000).toFixed(0)+'K':v.toString();
+    $('p-'+ids[i]).textContent=total>0?(v/total*100).toFixed(0)+'%':'—';
   });
-}
+  $('v-total').textContent=FMT(total);
 
-function filterChart(years) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-
-  if (years === 0 || allData.length === 0) {
-    renderChart(allData);
+  if(total===0){
+    $('risk-badge').textContent='—';
+    $('risk-badge').className='risk-badge';
+    $('crisis-rows').innerHTML='<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text3);padding:8px 0;">Portföy değerlerini girerek başla.</div>';
+    $('adv-pct').textContent='—';
+    $('adv-tl').textContent='—';
+    $('comp-body').innerHTML='';
+    $('narrative').textContent='Portföy değerlerini girerek başla.';
     return;
   }
 
-  const cutoff  = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - years);
-  const cutStr  = cutoff.toISOString().slice(0, 7);
-  const filtered = allData.filter(d => d.Date >= cutStr);
-  renderChart(filtered.length ? filtered : allData);
+  // Risk profili
+  const cReturns=CRISES.map(c=>({label:c.label,pct:crisisPct(arr,c)}));
+  const worst=Math.min(...cReturns.map(r=>r.pct));
+
+  let rLabel,rClass;
+  if(worst>-10)      {rLabel='Düşük Risk';      rClass='rb-low';}
+  else if(worst>-25) {rLabel='Orta Risk';        rClass='rb-med';}
+  else if(worst>-45) {rLabel='Yüksek Risk';      rClass='rb-high';}
+  else               {rLabel='Çok Yüksek Risk';  rClass='rb-xhigh';}
+
+  $('risk-badge').textContent=rLabel;
+  $('risk-badge').className='risk-badge '+rClass;
+
+  $('crisis-rows').innerHTML=cReturns.map(r=>`
+    <div class="crisis-row">
+      <span class="cr-name">${r.label}</span>
+      <span class="${r.pct>=0?'cr-pos':'cr-neg'}">${FMTP(r.pct)}</span>
+    </div>
+  `).join('');
+
+  // Pauran oranı
+  const targetPct=TARGETS[activeTarget];
+  const p=Math.max(0.02,Math.min(0.60,(targetPct-worst)/(PAURAN_AVG-worst)));
+  const pauranTL=total*p;
+
+  $('warn-box').style.display=p>=0.58?'block':'none';
+  $('adv-pct').textContent='%'+(p*100).toFixed(0);
+  $('adv-tl').textContent=FMT(pauranTL);
+
+  const amts=PW.map(w=>pauranTL*w);
+  $('comp-body').innerHTML=COMPS.map((c,i)=>`
+    <tr>
+      <td><div class="cnm">${c.name}</div><div class="csb">${c.sub}</div></td>
+      <td class="cw-bar">
+        <div class="wbar-track"><div class="wbar-fill" style="width:${PW[i]*100}%"></div></div>
+        <div class="wbar-pct">${PW[i]*100}%</div>
+      </td>
+      <td class="ctl">${FMT(amts[i])}</td>
+      <td class="amt">${getMiktar(i,amts[i])}</td>
+      <td><span class="${c.tag==='auto'?'tag-auto':'tag-man'}">${getFiyat(i)}</span></td>
+    </tr>
+  `).join('');
+
+  // Sekmeleri bir kez oluştur
+  if(!tabsBuilt){
+    const tabsEl=$('vtabs');
+    CRISES.forEach((c,i)=>{
+      const btn=document.createElement('div');
+      btn.id='vtab-'+i;
+      btn.className='vtab topt'+(i===0?' active':'');
+      btn.textContent=c.label;
+      btn.onclick=()=>setVerify(i);
+      tabsEl.appendChild(btn);
+    });
+    tabsBuilt=true;
+  }
+
+  renderVerify(total,pauranTL,arr);
 }
 
-// ── DOWNLOAD ──────────────────────────────────────────────────────────────────
-document.getElementById('dl-csv').addEventListener('click', () => {
-  window.open('https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/sample/sample_output.csv', '_blank');
-});
+function renderVerify(total,pauranTL,arr){
+  if(!arr) arr=getArr();
+  if(!total) total=arr.reduce((s,v)=>s+v,0);
+  if(!pauranTL){
+    const worst=Math.min(...CRISES.map(c=>crisisPct(arr,c)));
+    const p=Math.max(0.02,Math.min(0.60,(TARGETS[activeTarget]-worst)/(PAURAN_AVG-worst)));
+    pauranTL=total*p;
+  }
+  if(total===0) return;
 
-document.getElementById('dl-json').addEventListener('click', () => {
-  window.open('https://raw.githubusercontent.com/Paurancom/pauran-protocol/main/sample/sample_output.json', '_blank');
-});
+  const c=CRISES[activeVerify];
+  const arr2=getArr();
+  const portGain=arr2.reduce((s,v,i)=>s+v*(c.ap[i]/100),0);
+  const portPct=portGain/total*100;
+  const pauranGain=pauranTL*(c.pauranPct/100);
+  const combGain=portGain+pauranGain;
+  const combPct=combGain/total*100;
+  const saved=combGain-portGain;
+  const protPct=portGain<0?Math.min(100,Math.abs(saved/portGain*100)):0;
 
-// ── SAMPLE FALLBACK DATA ──────────────────────────────────────────────────────
-const SAMPLE_DATA = [
-  {"Date":"1960-03","Energy":2.134449,"Food":21.057413,"Metals":12.720559,"Precious_Metals":3.268735,"Pauran_raw":12.992896,"Pauran":13.026580},
-  {"Date":"1960-06","Energy":2.134449,"Food":20.679259,"Metals":12.751078,"Precious_Metals":3.268735,"Pauran_raw":12.850790,"Pauran":12.994822},
-  {"Date":"1960-09","Energy":2.134449,"Food":21.305990,"Metals":12.501877,"Precious_Metals":3.268735,"Pauran_raw":13.026722,"Pauran":12.976275},
-  {"Date":"1960-12","Energy":2.134449,"Food":20.516910,"Metals":12.412539,"Precious_Metals":3.268735,"Pauran_raw":12.684289,"Pauran":12.557935},
-  {"Date":"1965-06","Energy":2.389932,"Food":23.112445,"Metals":14.201234,"Precious_Metals":3.512341,"Pauran_raw":14.812334,"Pauran":14.901234},
-  {"Date":"1970-06","Energy":3.812445,"Food":26.334512,"Metals":16.112334,"Precious_Metals":4.201234,"Pauran_raw":17.334512,"Pauran":17.201234},
-  {"Date":"1973-12","Energy":8.334512,"Food":34.512334,"Metals":21.334512,"Precious_Metals":8.512334,"Pauran_raw":24.512334,"Pauran":23.334512},
-  {"Date":"1975-06","Energy":9.112334,"Food":38.201234,"Metals":22.512334,"Precious_Metals":9.334512,"Pauran_raw":26.201234,"Pauran":25.512334},
-  {"Date":"1980-06","Energy":28.334512,"Food":48.512334,"Metals":31.201234,"Precious_Metals":38.334512,"Pauran_raw":38.512334,"Pauran":37.201234},
-  {"Date":"1985-06","Energy":18.201234,"Food":42.334512,"Metals":27.512334,"Precious_Metals":22.201234,"Pauran_raw":31.334512,"Pauran":31.201234},
-  {"Date":"1990-06","Energy":22.512334,"Food":45.201234,"Metals":29.334512,"Precious_Metals":21.512334,"Pauran_raw":33.512334,"Pauran":33.334512},
-  {"Date":"1995-06","Energy":21.334512,"Food":47.512334,"Metals":28.201234,"Precious_Metals":19.334512,"Pauran_raw":33.201234,"Pauran":33.512334},
-  {"Date":"2000-06","Energy":35.512334,"Food":51.201234,"Metals":33.334512,"Precious_Metals":21.512334,"Pauran_raw":41.201234,"Pauran":40.512334},
-  {"Date":"2005-06","Energy":64.201234,"Food":62.334512,"Metals":57.512334,"Precious_Metals":46.201234,"Pauran_raw":60.334512,"Pauran":59.201234},
-  {"Date":"2008-06","Energy":132.334512,"Food":121.512334,"Metals":118.201234,"Precious_Metals":89.334512,"Pauran_raw":119.201234,"Pauran":114.334512},
-  {"Date":"2010-06","Energy":100.000000,"Food":100.000000,"Metals":100.000000,"Precious_Metals":100.000000,"Pauran_raw":100.000000,"Pauran":100.000000},
-  {"Date":"2014-06","Energy":124.512334,"Food":107.201234,"Metals":90.334512,"Precious_Metals":109.512334,"Pauran_raw":107.512334,"Pauran":107.201234},
-  {"Date":"2016-06","Energy":64.334512,"Food":91.512334,"Metals":75.201234,"Precious_Metals":107.334512,"Pauran_raw":80.334512,"Pauran":81.512334},
-  {"Date":"2019-06","Energy":78.201234,"Food":94.334512,"Metals":82.512334,"Precious_Metals":116.201234,"Pauran_raw":87.334512,"Pauran":87.201234},
-  {"Date":"2020-06","Energy":44.334512,"Food":97.512334,"Metals":86.201234,"Precious_Metals":138.334512,"Pauran_raw":84.512334,"Pauran":85.334512},
-  {"Date":"2021-02","Energy":79.209480,"Food":114.260994,"Metals":106.517786,"Precious_Metals":142.949688,"Pauran_raw":107.796598,"Pauran":103.813407}
-];
+  $('r-no').textContent=FMTP(portPct);
+  $('r-no').style.color=portPct>=0?'var(--green)':'#C07070';
+  $('r-no-tl').textContent=FMT(portGain);
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-loadData();
+  $('r-pau').textContent=FMTP(c.pauranPct);
+  $('r-pau-tl').textContent=FMT(pauranGain)+' (Pauran)';
+
+  $('r-com').textContent=FMTP(combPct);
+  $('r-com').style.color=combPct>=0?'var(--green)':'#C07070';
+  $('r-com-tl').textContent=FMT(combGain)+' toplam';
+
+  $('r-saved').textContent=(saved>=0?'+':'')+FMT(saved);
+
+  $('narrative').innerHTML=portGain>=0
+    ?`${c.label} krizinde portföyün <strong>${FMTP(portPct)}</strong> getiri sağladı — savunmacı bir yapın var. Pauran ek olarak <strong>${FMT(pauranGain)}</strong> kazandırdı.`
+    :`${c.label} krizinde portföyün <strong>${FMTP(portPct)}</strong> kaybetti — <strong>${FMT(Math.abs(portGain))}</strong> eridi. Önerilen Pauran <strong>${FMTP(c.pauranPct)}</strong> kazandırdı. Birleşik kayıp <strong>${FMTP(combPct)}</strong>'e indi. <strong>${FMT(saved)}</strong> kurtarıldı — kaybın <strong>${protPct.toFixed(0)}%'i</strong> frenle ndi.`;
+}
+
+loadPrices();
+calc();
 </script>
 </body>
 </html>
