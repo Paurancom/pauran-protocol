@@ -909,7 +909,11 @@ input[type=number]:focus {
           <tbody id="comp-body"></tbody>
         </table>
         <div style="margin-top:12px;padding:10px 14px;border-top:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);line-height:1.6;letter-spacing:0.03em;">
-          ⚠ Bilgi amaçlıdır. Yatırım tavsiyesi değildir. Geçmiş performans gelecek sonuçları garanti etmez.
+          ⚠ Bilgi amaçlıdır. Yatırım tavsiyesi değildir. Geçmiş performans gelecek sonuçları garanti etmez.<br>
+          📊 Kriz getirileri 2006–2024 tarihsel verisi üzerinden backtesting ile hesaplanmıştır — Pauran o dönemde mevcut değildi.<br>
+          💡 Formül ağırlıkları (%45 altın, %35 USD vb.) SLSQP optimizasyonu ile türetilmiştir, periyodik olarak güncellenir.<br>
+          🔄 Bu anlık bir hesaplamadır. Piyasa koşulları değiştikçe yeniden hesaplamanız önerilir.<br>
+          💰 Alım/satım komisyonları ve vergi bu hesaba dahil değildir.
         </div>
       </div>
 
@@ -918,7 +922,8 @@ input[type=number]:focus {
 
   <!-- Adım 5: Doğrulama -->
   <div class="results-wrap">
-    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:12px;">Adım 05 — Doğrulama: bu kriz senaryosunda ne olur?</div>
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:4px;">Adım 05 — Doğrulama: bu kriz senaryosunda ne olur?</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:12px;">Kriz getirileri tarihsel backtesting verisidir. Gerçek sonuçlar farklılık gösterebilir.</div>
     <div class="vtabs-row" id="vtabs"></div>
     <div class="results-grid">
       <div class="rcard">
@@ -1049,9 +1054,7 @@ async function loadPrices(){
     USD_TL=fxD.rates.TRY;
     const altinD=await(await fetch('https://api.genelpara.com/json/?list=altin&sembol=all')).json();
     GOLD_TL=parseFloat(altinD.data.GA.alis);
-    const xauUsd=parseFloat(altinD.data.XAUUSD.alis);
-    const ratio=parseFloat(altinD.data.XAUXAG.alis);
-    SILVER_TL=((xauUsd/ratio)/TROY)*USD_TL;
+    SILVER_TL=parseFloat(altinD.data.GAG.alis); // GAG = gram gümüş TL
     $('v-usdtl').textContent=USD_TL.toFixed(2)+' ₺';
     $('v-goldtl').textContent=N(GOLD_TL)+' ₺';
     $('v-silvertl').textContent=N(SILVER_TL)+' ₺';
