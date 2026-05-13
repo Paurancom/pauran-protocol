@@ -20,7 +20,7 @@
   --border2: rgba(255,255,255,0.06);
   --text: #E8E4DC;
   --text2: #9A9590;
-  --text3: #5A5550;
+  --text3: #8A8580;
   --green: #4A8C5C;
   --green-bg: rgba(74,140,92,0.12);
   --red: #8C4A4A;
@@ -884,6 +884,9 @@ input[type=number]:focus {
       <div class="panel" style="flex:1;">
         <div class="panel-tag">Adım 04</div>
         <div class="panel-title">Pauran alım tavsiyesi</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:16px;padding:8px 12px;border-left:2px solid var(--gold-dim);line-height:1.6;">
+          Pauran mevcut portföyünüzden bağımsız, ayrı bir hesapta tutulur. Portföyünüzdeki altın veya döviz Pauran hesabına dahil edilmez.
+        </div>
         <div class="warn-box" id="warn-box">⚠ Bu tolerans için portföyün çok riskli. Pauran tek başına yeterli olmayabilir.</div>
         <div class="advice-header">
           <div>
@@ -908,11 +911,11 @@ input[type=number]:focus {
           </thead>
           <tbody id="comp-body"></tbody>
         </table>
-        <div style="margin-top:12px;padding:10px 14px;border-top:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);line-height:1.6;letter-spacing:0.03em;">
+        <div style="margin-top:12px;padding:10px 14px;border-top:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);line-height:1.7;letter-spacing:0.02em;">
           ⚠ Bilgi amaçlıdır. Yatırım tavsiyesi değildir. Geçmiş performans gelecek sonuçları garanti etmez.<br>
           📊 Kriz getirileri 2006–2024 tarihsel verisi üzerinden backtesting ile hesaplanmıştır — Pauran o dönemde mevcut değildi.<br>
           💡 Formül ağırlıkları (%45 altın, %35 USD vb.) SLSQP optimizasyonu ile türetilmiştir, periyodik olarak güncellenir.<br>
-          🔄 Bu anlık bir hesaplamadır. Piyasa koşulları değiştikçe yeniden hesaplamanız önerilir.<br>
+          🔄 Bu anlık bir hesaplamadır. Şu durumlarda yeniden hesaplamanızı öneririz: portföyünüzde önemli değişiklik olduysa, büyük ekonomik gelişme yaşandıysa veya 2 haftada bir rutin kontrol olarak.<br>
           💰 Alım/satım komisyonları ve vergi bu hesaba dahil değildir.
         </div>
       </div>
@@ -947,7 +950,7 @@ input[type=number]:focus {
       <span class="saved-val" id="r-saved">—</span>
     </div>
     <div class="narrative" id="narrative">Portföy değerlerini girerek başla.</div>
-    <div style="margin-top:12px;padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);line-height:1.6;letter-spacing:0.03em;">
+    <div style="margin-top:12px;padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid var(--border2);font-family:'DM Mono',monospace;font-size:13px;color:var(--text3);line-height:1.7;letter-spacing:0.02em;">
       ⚠ Bu hesaplama yalnızca bilgi amaçlıdır. Yatırım tavsiyesi değildir. Geçmiş performans gelecek sonuçları garanti etmez. Herhangi bir yatırım kararı almadan önce lisanslı bir finansal danışmana başvurunuz.
     </div>
   </div>
@@ -955,6 +958,41 @@ input[type=number]:focus {
 </section>
 
 <!-- ── NASIL ÇALIŞIR ── -->
+<div class="section-divider"></div>
+<section style="padding:60px 48px;" id="tum-donem">
+  <div style="max-width:900px;margin:0 auto;">
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:24px;">Şeffaflık</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:400;margin-bottom:16px;color:var(--text);">Pauran her dönem güçlü değil</h2>
+    <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:32px;">Pauran krizlere karşı tasarlandı. BIST'in yükseliş trendinde olduğu dönemlerde Pauran portföyü frenliyebilir. Bunu saklamamak için tüm 2006-2024 performansını gösteriyoruz.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;" class="nasil-grid">
+      <div style="background:var(--dark2);border:1px solid var(--border2);padding:24px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#4A8C5C;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">Kriz dönemleri — Pauran güçlü</div>
+        <div style="font-size:13px;color:var(--text2);line-height:2.0;font-family:'DM Mono',monospace;">
+          2008: BIST -%51 → Pauran +%31<br>
+          2011: BIST -%22 → Pauran +%30<br>
+          2013: BIST -%13 → Pauran +%33<br>
+          2015: BIST -%16 → Pauran +%32<br>
+          2018: BIST -%21 → Pauran +%68<br>
+          2021: BIST -%21 → Pauran +%68
+        </div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border2);padding:24px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:#8C4A4A;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:16px;">Yükseliş dönemleri — Pauran frenliyebilir</div>
+        <div style="font-size:13px;color:var(--text2);line-height:2.0;font-family:'DM Mono',monospace;">
+          2007: BIST +%42 → Pauran +%11<br>
+          2009: BIST +%97 → Pauran +%10<br>
+          2012: BIST +%53 → Pauran +%8<br>
+          2020: BIST +%30 → Pauran +%23<br>
+          2022: BIST +%197 → Pauran +%83<br>
+          2023: BIST +%36 → Pauran +%55
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);line-height:1.7;padding:12px 16px;border-left:2px solid var(--gold-dim);">
+      TL değer kaybettiği dönemlerde (2020 sonrası) fren etkisi minimale indi — BIST ve Pauran birlikte yükseldi. Fren en çok TL'nin güçlü olduğu 2003-2013 döneminde görüldü.
+    </div>
+  </div>
+</section>
 <div class="section-divider"></div>
 <section id="nasil-calisir" style="padding:80px 48px;">
   <div style="max-width:900px;margin:0 auto;">
